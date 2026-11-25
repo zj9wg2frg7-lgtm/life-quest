@@ -1,6 +1,6 @@
 /* Life Quest — content. Everything the app says lives here, so it can be edited without touching logic. */
 window.LQ = {
-  version: "2.1.0",
+  version: "2.2.0",
 
   cats: {
     work:   { name: "Work & fixed",  color: "#C67A78", soft: "#FCE1DF" },
@@ -14,10 +14,12 @@ window.LQ = {
   },
 
   /* Base routine. kind: quest (tick for XP) · fixed (no tick) · open (free time window) · gym. travel = minutes of commute before AND after. */
-  routineVersion: 3,
+  routineVersion: 4,
   routine: [
     { id: "morning", tag: "morning", cat: "body", title: "Morning reset", days: [0,1,2,3,4,5,6], start: "07:00", end: "07:30", xp: 10, remind: 0,
       note: "500 ml water before coffee · breakfast with protein · vitamin D + omega-3 + creatine · 5 min daylight." },
+    { id: "meditate", tag: "meditate", cat: "mind", title: "Meditate · today's lesson", days: [0,1,2,3,4,5,6], start: "07:30", end: "07:45", xp: 15,
+      note: "Open Mind → Meditate and press Start. Even 5 minutes counts." },
     { id: "job1", tag: "job", cat: "career", title: "Job hunt: 1 application", days: [0,1,4], start: "08:15", end: "09:45", xp: 40, remind: 0,
       note: "Win condition: 1 tailored application OR 1 serious lead (message, call, follow-up). Pick the job in the first 10 minutes." },
     { id: "job2", tag: "job", cat: "career", title: "Job hunt: 1 application", days: [2,3], start: "09:00", end: "10:30", xp: 40, remind: 0,
@@ -182,6 +184,61 @@ window.LQ = {
   protein: [["Magerquark 250 g", 30], ["Skyr 150 g", 16], ["Hüttenkäse 200 g", 24], ["2 eggs", 13], ["Tofu 200 g", 28],
             ["Chicken breast 150 g", 34], ["Lentils 200 g cooked", 18], ["Protein shake", 24], ["+5 g", 5]],
 
+  /* Meditation. kind guided = timed spoken/written steps (at = fraction of the session); kind pace = breathing pacer. */
+  meditations: [
+    { id: "breath", name: "Breath focus", mins: [5, 10, 15], kind: "guided", short: "The foundation: train attention by returning to the breath.",
+      steps: [[0, "Sit comfortably, back upright but not stiff. Close your eyes or soften your gaze."], [0.06, "Take three slower breaths. Then let the breath breathe itself."],
+        [0.15, "Find where you feel the breath most clearly — nostrils, chest or belly. Rest your attention there."],
+        [0.3, "Your mind will wander. That isn't failure. Noticing and coming back is the rep."],
+        [0.5, "If it helps, count: 1 on the in-breath, 2 on the next, up to 10. Then start again."],
+        [0.7, "Lost count? Just begin at 1. No commentary needed."], [0.88, "Let go of the focus. Notice the whole body sitting here."], [0.96, "Gently open your eyes."]] },
+    { id: "body", name: "Body scan", mins: [10, 20], kind: "guided", short: "Slow attention through the body — great for back and knee awareness.",
+      steps: [[0, "Lie down or sit. Feel the weight of your body being supported."], [0.06, "Bring attention to your toes and feet. Just notice: warmth, pressure, nothing at all."],
+        [0.16, "Move up to the calves and knees. Breathe into the knees and let them soften."], [0.27, "Thighs, hips and glutes. Notice any gripping and let it go."],
+        [0.38, "Lower back and belly. Imagine the breath gently widening the lower back."], [0.5, "Chest and upper back. Feel the shoulder blades slide down and rest."],
+        [0.61, "Hands, arms, shoulders. Let them become heavy."], [0.72, "Neck, jaw and face. Unclench the jaw, soften the eyes and forehead."],
+        [0.84, "Now feel the whole body at once, breathing."], [0.95, "Slowly move your fingers and toes, and open your eyes."]] },
+    { id: "sigh", name: "Cyclic sighing", mins: [5], kind: "pace", pattern: [["Breathe in", 2], ["Top up", 1], ["Long breath out", 6]],
+      short: "Double inhale, long exhale. In one study it lifted mood more than mindfulness meditation in 5 min a day." },
+    { id: "box", name: "Box breathing", mins: [3, 5], kind: "pace", pattern: [["Breathe in", 4], ["Hold", 4], ["Breathe out", 4], ["Hold", 4]],
+      short: "Steady 4-4-4-4 rhythm before an interview or anything stressful." },
+    { id: "resonance", name: "Resonance breathing", mins: [5, 10], kind: "pace", pattern: [["Breathe in", 4], ["Breathe out", 6]],
+      short: "Six slow breaths a minute — the pace where heart-rate variability peaks." },
+    { id: "478", name: "4-7-8 for sleep", mins: [3], kind: "pace", pattern: [["Breathe in", 4], ["Hold", 7], ["Breathe out", 8]],
+      short: "Long holds and exhales to slow down at night. If you feel light-headed, breathe normally." },
+    { id: "metta", name: "Loving-kindness", mins: [10], kind: "guided", short: "Wish people well — starting with someone easy, ending with everyone.",
+      steps: [[0, "Settle into your seat and take a few easy breaths."], [0.08, "Picture someone you love easily. Silently offer: may you be safe, may you be healthy, may you be at ease."],
+        [0.3, "Now offer the same to yourself. May I be safe. May I be healthy. May I be at ease. Notice if that feels harder."],
+        [0.5, "Picture someone neutral — a cashier, a neighbour. Offer them the same words."], [0.68, "Now someone slightly difficult. A small dose is enough. May you be at ease."],
+        [0.84, "Widen it: people in this city, in Ukraine, everywhere. May all beings be safe and at ease."], [0.96, "Let the words go and open your eyes."]] },
+    { id: "noting", name: "Noting", mins: [10], kind: "guided", short: "Softly label what pulls you away: thinking, hearing, feeling.",
+      steps: [[0, "Rest attention on the breath."], [0.1, "When something pulls you away, label it with one soft word: thinking, planning, hearing, feeling, wanting."],
+        [0.3, "Label once, then return to the breath. Lightly — like tapping it on the shoulder."], [0.5, "Notice which label shows up most today. That's information, not a problem."],
+        [0.7, "Notice the small gap after a label, before the next thought."], [0.88, "Drop the labels and simply sit."], [0.96, "Open your eyes."]] },
+    { id: "open", name: "Open awareness", mins: [10], kind: "guided", short: "Let sounds, sensations and thoughts come and go without chasing them.",
+      steps: [[0, "Sit and take a few breaths."], [0.1, "Open your attention to sounds — near, far, inside the room, outside."], [0.3, "Notice body sensations arriving and leaving, like sounds."],
+        [0.5, "Let thoughts be like sounds too. They appear, stay a moment, pass."], [0.7, "Rest as the space in which all of this happens. Nothing to do."], [0.95, "Gently come back and open your eyes."]] },
+    { id: "walk", name: "Walking meditation", mins: [10, 15], kind: "guided", short: "Eyes open, on the commute or a walk. Same training, moving.",
+      steps: [[0, "Walk at a natural pace. Feel your feet touching the ground."], [0.12, "Notice heel, roll, toes. Left, right."], [0.3, "Widen to the whole body moving: arms, hips, breath."],
+        [0.5, "Notice what you see — colours, light — without naming everything."], [0.7, "Notice sounds around you. When the mind wanders, come back to the feet."], [0.95, "Take one more conscious step. Done."]] },
+    { id: "urge", name: "Urge surfing", mins: [5], kind: "guided", short: "For cravings: watch the wave rise and fall instead of obeying it.",
+      steps: [[0, "Notice the craving. Rate it from 1 to 10."], [0.12, "Where do you feel it in the body? Mouth, chest, hands?"], [0.3, "Breathe toward that place. Don't fight it, don't feed it."],
+        [0.5, "Watch it change: stronger, weaker, moving. Urges are waves."], [0.75, "Rate it again from 1 to 10. Notice it changed without you acting on it."], [0.95, "You surfed it. Choose your next step on purpose."]] },
+    { id: "sleep", name: "Sleep relaxation", mins: [10, 15], kind: "guided", quietEnd: true, short: "Tense and release, from feet to face. No bell at the end — just drift off.",
+      steps: [[0, "Lie down. Lights off, phone face down."], [0.06, "Curl your toes and tense your feet for 5 seconds… and release."], [0.16, "Tense your calves and thighs… and let go completely."],
+        [0.26, "Squeeze your glutes… and release. Feel the lower back sink into the bed."], [0.36, "Make fists, tense your arms… and let them drop."],
+        [0.46, "Shoulders up to your ears… and drop them."], [0.56, "Scrunch your face… and soften everything: jaw, eyes, forehead."],
+        [0.66, "Your whole body is heavy now. Let the breath out be longer than the breath in."], [0.8, "Nothing more to do tonight. Let sleep come when it wants."]] }
+  ],
+  /* 4-week training: one lesson a day. */
+  course: [
+    ["breath", 5], ["breath", 5], ["sigh", 5], ["breath", 5], ["body", 10], ["breath", 5], ["walk", 10],
+    ["breath", 10], ["noting", 10], ["body", 10], ["breath", 10], ["resonance", 5], ["metta", 10], ["walk", 10],
+    ["noting", 10], ["breath", 10], ["open", 10], ["body", 20], ["noting", 10], ["metta", 10], ["urge", 5],
+    ["open", 10], ["breath", 15], ["noting", 10], ["metta", 10], ["body", 20], ["open", 10], ["breath", 15]
+  ],
+  courseWeeks: ["Week 1 · Learn to sit", "Week 2 · Notice the mind", "Week 3 · Label and open", "Week 4 · Stay with it"],
+
   /* Habit log. limit = per week (0 = aim for none). */
   habits: [
     { id: "smoke", name: "Smoking", unit: "cigarettes", limit: 0, on: true },
@@ -339,6 +396,15 @@ window.LQ = {
     { id: "l2", c: "read", t: "Spacing makes it stick", b: "The same study time spread over several days beats one long session for remembering it weeks later.", src: "Cepeda et al., 2006 meta-analysis" },
     { id: "l3", c: "read", t: "Paper still wins for facts", b: "For informational texts, people understand slightly more from paper than from screens — especially under time pressure.", src: "Delgado et al., 2018 meta-analysis" },
     { id: "l4", c: "read", t: "Fiction trains empathy over time", b: "Lifetime exposure to fiction is linked to better understanding of others' minds. Single short reading sessions show less reliable effects.", src: "Mar, 2018 review" },
+    // meditation
+    { id: "md1", c: "calm", t: "Five minutes of sighing beat meditation", b: "In a month-long trial, 5 minutes a day of cyclic sighing (double inhale, long exhale) improved mood and lowered breathing rate more than mindfulness meditation did.", src: "Balban et al., 2023, Cell Reports Medicine" },
+    { id: "md2", c: "calm", t: "Your mind wanders half the day", b: "People's minds wandered in about 47 % of waking moments, and they were less happy while it did — even during pleasant activities. Meditation trains the return.", src: "Killingsworth & Gilbert, 2010, Science" },
+    { id: "md3", c: "calm", t: "The real effect size", b: "Across 47 trials, meditation programmes improved anxiety, depression and pain by a moderate amount — real, but similar to other active treatments. It's training, not magic.", src: "Goyal et al., 2014, JAMA Internal Medicine" },
+    { id: "md4", c: "calm", t: "Kindness practice builds resources", b: "Seven weeks of loving-kindness meditation increased daily positive emotions, which in turn built resources like social support and purpose in life.", src: "Fredrickson et al., 2008" },
+    { id: "md5", c: "calm", t: "Six breaths a minute", b: "Breathing around six times a minute makes heart rate and breath move in sync, which maximises heart-rate variability — a marker of a calm, flexible nervous system.", src: "Lehrer & Gevirtz, 2014" },
+    { id: "md6", c: "calm", t: "Brain-change claims are shaky", b: "A large 2022 study found no structural brain changes after 8 weeks of mindfulness training. The benefits that hold up are in how you feel and act — that's enough.", src: "Kral et al., 2022, Science Advances" },
+    { id: "md7", c: "calm", t: "13 minutes is enough to matter", b: "New meditators who did 13 minutes a day for 8 weeks improved attention, working memory and mood. Four weeks didn't show the same effects — consistency is the dose.", src: "Basso et al., 2019" },
+    { id: "md8", c: "calm", t: "Muscle relaxation helps sleep", b: "Progressive muscle relaxation — tensing and releasing muscle groups — improves sleep quality and is part of standard insomnia therapy.", src: "CBT-I guidelines; e.g. Edinger et al., 2021" },
     // habits
     { id: "hb1", c: "habit", t: "Urges are waves", b: "A craving rises, peaks and fades if you don't act on it. Smokers taught to “surf” urges with curious attention instead of fighting them smoked fewer cigarettes over the following week.", src: "Bowen & Marlatt, 2009" },
     { id: "hb2", c: "habit", t: "Cigarettes create the stress they relieve", b: "Smoking feels calming because it ends the withdrawal the last cigarette started. Across 26 studies, people who quit ended up with lower anxiety, depression and stress than people who kept smoking.", src: "Taylor et al., 2014, BMJ" },
@@ -357,7 +423,7 @@ window.LQ = {
   insightMap: {
     gym: ["train", "food", "sleep"], tennis: ["train", "social"], stretch: ["train", "sleep"], morning: ["sleep", "food", "mind"],
     wind: ["sleep", "mind"], job: ["career", "mind"], mit: ["mind", "career"], read: ["read", "mind"], review: ["mind"],
-    habit: ["habit"], commute: ["mind", "read"], clean: ["home", "mind"], groceries: ["food"], mealprep: ["food"], premeal: ["food"], journal: ["mind"],
+    habit: ["habit"], meditate: ["calm", "mind"], commute: ["mind", "read"], clean: ["home", "mind"], groceries: ["food"], mealprep: ["food"], premeal: ["food"], journal: ["mind"],
     social: ["social"], mom: ["social"], sis: ["social"], body: ["sleep", "train", "food"], todo: ["mind", "career"], any: ["mind", "social", "food"]
   },
 
@@ -378,6 +444,9 @@ window.LQ = {
     ["insights30", "Curious mind", "Collect 30 insights"],
     ["resist10", "Urge surfer", "Resist 10 urges"],
     ["clear7", "Clean week", "7 clear days in a row for a habit you're cutting"],
+    ["med10", "Still water", "10 meditation sessions"],
+    ["med300", "Deep roots", "300 minutes of meditation"],
+    ["course", "Trained mind", "Finish the 4-week meditation training"],
     ["lvl10", "Bloom", "Reach level 10"]
   ]
 };

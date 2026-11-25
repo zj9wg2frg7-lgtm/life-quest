@@ -198,6 +198,21 @@ table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px s
 .hbtns{flex:none;gap:6px}
 .hint.pad{padding:0 4px}
 .habitrow{margin:6px 0}
+/* meditation */
+#md{position:fixed;inset:0;background:var(--bg);z-index:22;overflow-y:auto;display:none;padding:calc(var(--sat) + 8px) 18px calc(var(--sab) + 24px)}
+#md.on{display:block}
+#mdBody{max-width:560px;margin:0 auto}
+#mdBody .seg5 button.on{background:var(--acc);color:var(--accink)}
+.mdring{position:relative;width:min(78vw,320px);aspect-ratio:1;margin:18px auto 10px}
+.mdring svg{position:absolute;inset:0;width:100%;height:100%}
+.mdring .trk{fill:none;stroke:var(--fill);stroke-width:8}
+.mdring .arc{fill:none;stroke:var(--acc);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.pacer{position:absolute;left:50%;top:50%;width:68%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--soft),color-mix(in srgb,var(--acc) 35%,var(--soft)));transform:translate(-50%,-50%) scale(.5)}
+.pacer.drift{animation:drift 10s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(-50%,-50%) scale(.62)}50%{transform:translate(-50%,-50%) scale(.82)}}
+.mdtime{position:absolute;inset:0;display:grid;place-items:center;font-size:40px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.mdtext{font-family:ui-serif,"New York",Georgia,serif;font-size:22px;line-height:1.4;text-align:center;min-height:5.6em;margin:8px 6px}
+@media(prefers-reduced-motion:reduce){.pacer.drift{animation:none}}
 /* journal */
 .summary p:not(.eyebrow){font-weight:500}
 /* garden */
@@ -250,6 +265,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <main id="view"></main>
 <nav id="tabs" aria-label="Sections"></nav>
 <div id="gm" role="dialog" aria-label="Workout"><div id="gmBody"></div></div>
+<div id="md" role="dialog" aria-label="Meditation"><div id="mdBody"></div></div>
 <div id="sheet" aria-hidden="true"><div id="sheetPanel" role="dialog" aria-modal="true"><div class="grab"><span></span><i></i><button class="link" data-close>Close</button></div><div id="sheetBody"></div></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <button id="update">New version ready · tap to update</button>

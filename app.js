@@ -33,7 +33,7 @@ function fresh() {
     settings: { name: 'Anastasiia', water: 8, protein: 115, topic: '', remind: { routine: true, events: true, morning: true, eat: true, mom: true } },
     routine: clone(C.routine), events: clone(C.events), activities: clone(C.activities), todos: [],
     logs: {}, gym: {}, last: {}, ladder: 1, periods: [], cycleLen: 28, periodLen: 5, apps: [],
-    seen: {}, ach: {}, sent: {}, lowOff: {}, draft: null, rv: C.routineVersion,
+    seen: {}, ach: {}, sent: {}, lowOff: {}, draft: null, rv: C.routineVersion, med: { sessions: [], course: 0, voice: false, last: '' },
     habits: C.habits.map(h => Object.assign({ created: TODAY }, h)) };
 }
 let S;
@@ -189,6 +189,7 @@ function dayXP(d) {
   if (L.vit) x += 5;
   if (L.energy) x += 5;
   if (L.j && (L.j.win || L.j.note || L.j.mood)) x += 20;
+  x += Math.min(medMinutes(d), 20);
   return x;
 }
 const totalXP = () => Object.keys(S.logs).reduce((a, d) => a + dayXP(d), 0);
@@ -221,6 +222,9 @@ const ACHK = {
   'pushup': () => S.ladder >= 6,
   'resist10': () => Object.values(S.logs).reduce((n, l) => n + Object.values(l.h || {}).reduce((m, h) => m + (h.r || 0), 0), 0) >= 10,
   'clear7': () => S.habits.some(h => h.on && clearStreak(h) >= 7),
+  'med10': () => S.med.sessions.length >= 10,
+  'med300': () => S.med.sessions.reduce((n, s) => n + s.mins, 0) >= 300,
+  'course': () => S.med.course >= C.course.length,
   'legpress80': () => ((S.last.legpress || {}).w || 0) >= 80,
   'journal14': () => Object.values(S.logs).filter(l => l.j && (l.j.win || l.j.note)).length >= 14,
   'insights30': () => Object.keys(S.seen).length >= 30,
@@ -315,23 +319,23 @@ function openSheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').classLi
 function closeSheet() { $('#sheet').classList.remove('on'); $('#sheet').setAttribute('aria-hidden', 'true'); }
 
 /* ---------- views ---------- */
-let VIEW = 'today', DAY = TODAY, PLAN_DAY = TODAY, PLAN_TAB = 'cal', JQ = '', PICK = null;
+let VIEW = 'today', DAY = TODAY, PLAN_DAY = TODAY, PLAN_TAB = 'cal', JQ = '', PICK = null, MIND_TAB = 'med';
 const ICON = {
   today: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
   plan: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
   gym: '<path d="M6.5 8v8M17.5 8v8M3.5 10v4M20.5 10v4M6.5 12h11"/>',
-  journal: '<path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14.5H7.5A1.5 1.5 0 0 1 6 18V3.5z"/><path d="M6 18a1.5 1.5 0 0 1 1.5-1.5h11M9.5 8h5.5"/>',
+  mind: '<circle cx="12" cy="7" r="2.6"/><path d="M12 11.5c-2.2 0-3.6 1.4-4.4 3.2M12 11.5c2.2 0 3.6 1.4 4.4 3.2M4 17.5c2.5-.6 5-.2 8 1.4 3-1.6 5.5-2 8-1.4"/>',
   garden: '<path d="M12 21v-8"/><path d="M12 13c0-4 3-7 8-7 0 5-3 7-8 7zM12 15c0-3.2-2.4-5.5-6.5-5.5 0 4 2.4 5.5 6.5 5.5z"/>'
 };
 function tabbar() {
-  $('#tabs').innerHTML = [['today', 'Today'], ['plan', 'Plan'], ['gym', 'Gym'], ['journal', 'Journal'], ['garden', 'Garden']]
+  $('#tabs').innerHTML = [['today', 'Today'], ['plan', 'Plan'], ['gym', 'Gym'], ['mind', 'Mind'], ['garden', 'Garden']]
     .map(([k, n]) => `<a href="#${k}" class="${VIEW === k ? 'on' : ''}" aria-current="${VIEW === k ? 'page' : 'false'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg><span>${n}</span></a>`).join('');
 }
 function render() {
   TODAY = iso(new Date());
   tabbar();
   const v = $('#view');
-  v.innerHTML = VIEW === 'today' ? viewToday() : VIEW === 'plan' ? viewPlan() : VIEW === 'gym' ? viewGym() : VIEW === 'journal' ? viewJournal() : viewGarden();
+  v.innerHTML = VIEW === 'today' ? viewToday() : VIEW === 'plan' ? viewPlan() : VIEW === 'gym' ? viewGym() : VIEW === 'mind' ? viewMind() : viewGarden();
   if (S.draft && VIEW === 'gym' && !$('#gm').classList.contains('on')) {/* resume handled by button */}
 }
 
@@ -608,6 +612,134 @@ function finishGym() {
     <button class="btn primary wide" data-act="closeSheet">Done</button></div>`);
 }
 
+/* --- Mind: meditation --- */
+const medById = id => C.meditations.find(m => m.id === id);
+function medMinutes(d) { return ((S.med && S.med.sessions) || []).filter(s => s.d === d).reduce((n, s) => n + s.mins, 0); }
+function medStreak() {
+  const days = new Set(S.med.sessions.map(s => s.d)); let n = 0, d = TODAY;
+  if (!days.has(d)) d = addDays(d, -1);
+  while (days.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+function viewMind() {
+  return `<header class="head"><h1>Mind</h1></header>
+  <div class="seg">${[['med', 'Meditate'], ['journal', 'Journal']].map(([k, n]) => `<button class="${MIND_TAB === k ? 'on' : ''}" data-act="mtab" data-t="${k}">${n}</button>`).join('')}</div>
+  ${MIND_TAB === 'journal' ? viewJournal() : viewMeditate()}`;
+}
+function viewMeditate() {
+  const M = S.med, n = M.course, total = C.course.length, mins = M.sessions.reduce((s, x) => s + x.mins, 0);
+  const rated = M.sessions.filter(s => s.before && s.after), delta = rated.length ? rated.reduce((s, x) => s + (x.after - x.before), 0) / rated.length : null;
+  const doneToday = M.last === TODAY;
+  let hero;
+  if (n >= total) hero = `<div class="card hero"><p class="eyebrow">Training complete</p><h2>You finished all ${total} lessons.</h2><p class="hint">Keep going with any practice below — 10 minutes a day keeps the effect.</p></div>`;
+  else {
+    const [id, m] = C.course[n], med = medById(id);
+    hero = `<div class="card hero"><p class="eyebrow">${esc(C.courseWeeks[Math.floor(n / 7)])} · lesson ${n + 1} of ${total}</p>
+      <h2>${esc(med.name)} <span class="muted">· ${m} min</span></h2><p class="hint">${esc(med.short)}</p>
+      <div class="meter"><i style="width:${n / total * 100}%"></i></div>
+      ${doneToday ? `<p class="hint">Today's lesson is done ✓ — the next one unlocks tomorrow.</p><button class="btn wide" data-act="medOpen" data-id="${id}" data-m="${m}">Practise it anyway</button>`
+        : `<button class="btn primary wide big" data-act="medOpen" data-id="${id}" data-m="${m}" data-lesson="1">Start lesson</button>`}</div>`;
+  }
+  return `${hero}
+  <div class="stats3 card"><div><b>${mins}</b><span>minutes total</span></div><div><b>${medStreak()}</b><span>day streak</span></div><div><b>${delta == null ? '–' : (delta > 0 ? '+' : '') + delta.toFixed(1)}</b><span>calmer after (avg)</span></div></div>
+  <label class="toggle card"><input type="checkbox" data-act-change="medVoice"${M.voice ? ' checked' : ''}><span>Voice guidance (reads the steps aloud)</span></label>
+  <h2 class="sec">Practices</h2>
+  <div class="card list">${C.meditations.map(m => `<div class="li"><b>${esc(m.name)}</b><p class="hint">${esc(m.short)}</p>
+    <div class="row gap wrap">${m.mins.map(x => `<button class="btn small" data-act="medOpen" data-id="${m.id}" data-m="${x}">${x} min</button>`).join('')}</div></div>`).join('')}</div>`;
+}
+let MS = null, mT = null, mWake = null;
+function medOpen(id, mins, lesson) {
+  const m = medById(id);
+  MS = { id, mins, lesson, total: mins * 60, before: null, started: false };
+  $('#md').classList.add('on');
+  $('#mdBody').innerHTML = `<div class="gmtop"><button class="icon" data-act="medClose" aria-label="Close">⌄</button><span></span><span></span></div>
+    <p class="eyebrow">${lesson ? 'Training lesson' : 'Practice'} · ${mins} min</p><h2>${esc(m.name)}</h2><p class="lead">${esc(m.short)}</p>
+    <p class="label">How calm do you feel right now? <span class="hint">(optional)</span></p>
+    <div class="seg5" id="mdBefore">${[1, 2, 3, 4, 5].map(n => `<button data-act="medBefore" data-n="${n}">${n}</button>`).join('')}</div><p class="hint">1 = wired · 5 = very calm</p>
+    <button class="btn primary wide big" data-act="medBegin">Begin</button>`;
+}
+function say(t) {
+  if (!S.med.voice || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = 0.88; u.lang = 'en-GB'; speechSynthesis.speak(u); } catch (e) {}
+}
+function bell() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t = audioCtx.currentTime;
+    [[432, .18], [648, .08], [864, .05]].forEach(([f, v]) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 4); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 4.1); });
+  } catch (e) {}
+}
+function medBegin() {
+  const m = medById(MS.id);
+  Object.assign(MS, { started: true, start: Date.now(), pausedAt: null, pausedMs: 0, step: -1, phase: -1 });
+  const circ = 2 * Math.PI * 110;
+  $('#mdBody').innerHTML = `<div class="gmtop"><button class="link" data-act="medEnd">End</button><span class="hint">${esc(m.name)}</span><button class="link" data-act="medPause" id="mdPause">Pause</button></div>
+    <div class="mdring"><svg viewBox="0 0 260 260" aria-hidden="true"><circle cx="130" cy="130" r="110" class="trk"/><circle id="mdArc" cx="130" cy="130" r="110" class="arc" stroke-dasharray="${circ}" stroke-dashoffset="0" transform="rotate(-90 130 130)"/></svg>
+      <div class="pacer${m.kind === 'pace' ? '' : ' drift'}" id="mdPacer"></div><div class="mdtime" id="mdTime"></div></div>
+    <p class="mdtext" id="mdText" aria-live="polite">${m.kind === 'pace' ? '' : esc(m.steps[0][1])}</p>`;
+  bell();
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => mWake = w).catch(() => {}); } catch (e) {}
+  clearInterval(mT); mT = setInterval(medTick, 200); medTick();
+}
+const medElapsed = () => ((MS.pausedAt || Date.now()) - MS.start - MS.pausedMs) / 1000;
+function medTick() {
+  if (!MS || !MS.started) return;
+  const m = medById(MS.id), e = medElapsed(), left = Math.max(0, MS.total - e);
+  if (e >= MS.total) return medEnd(true);
+  const circ = 2 * Math.PI * 110, arc = $('#mdArc'); if (!arc) return;
+  arc.setAttribute('stroke-dashoffset', (circ * (e / MS.total)).toFixed(1));
+  $('#mdTime').textContent = Math.floor(left / 60) + ':' + pad(Math.floor(left % 60));
+  if (m.kind === 'guided') {
+    let i = 0; m.steps.forEach(([at], k) => { if (e >= at * MS.total) i = k; });
+    if (i !== MS.step) { MS.step = i; $('#mdText').textContent = m.steps[i][1]; say(m.steps[i][1]); }
+  } else {
+    const cyc = m.pattern.reduce((s, p) => s + p[1], 0); let t = e % cyc, i = 0;
+    while (t >= m.pattern[i][1]) { t -= m.pattern[i][1]; i++; }
+    const cycleNo = Math.floor(e / cyc);
+    if (i !== MS.phase || cycleNo !== MS.cycle) {
+      MS.phase = i; MS.cycle = cycleNo;
+      const [label, dur] = m.pattern[i], p = $('#mdPacer');
+      const scale = /in|Top/.test(label) ? (label === 'Top up' ? 1.06 : 1) : /out/.test(label) ? 0.5 : null;
+      if (scale != null) { p.style.transition = `transform ${dur}s ease-in-out`; p.style.transform = `translate(-50%,-50%) scale(${scale})`; }
+      $('#mdText').textContent = label + ' · ' + dur;
+      if (cycleNo < 2 || i === 0) say(label.replace(' · ', ''));
+    }
+  }
+}
+function medPause() {
+  if (!MS) return;
+  if (MS.pausedAt) { MS.pausedMs += Date.now() - MS.pausedAt; MS.pausedAt = null; $('#mdPause').textContent = 'Pause'; }
+  else { MS.pausedAt = Date.now(); $('#mdPause').textContent = 'Resume'; try { speechSynthesis.cancel(); } catch (e) {} }
+}
+function medEnd(complete) {
+  clearInterval(mT);
+  const m = medById(MS.id), e = Math.min(medElapsed(), MS.total), mins = Math.round(e / 60);
+  try { speechSynthesis.cancel(); } catch (e2) {}
+  try { mWake && mWake.release(); } catch (e2) {} mWake = null;
+  if (!m.quietEnd) bell();
+  if (mins < 1) { medClose(); toast('Too short to log — even 1 minute counts next time'); return; }
+  const sess = { d: TODAY, id: MS.id, mins, full: complete };
+  if (MS.before) sess.before = MS.before;
+  S.med.sessions.push(sess); if (S.med.sessions.length > 1500) S.med.sessions.shift();
+  let lessonDone = false;
+  if (MS.lesson && e >= MS.total * 0.8 && S.med.last !== TODAY) { S.med.course++; S.med.last = TODAY; lessonDone = true; }
+  const it = itemsFor(TODAY).find(i => i.tag === 'meditate'), L = log(TODAY);
+  let xp = Math.min(mins, 20);
+  if (it && !L.q[it.key]) { L.q[it.key] = { xp: it.xp, cat: 'mind', tag: 'meditate' }; xp += it.xp; }
+  save();
+  MS.sess = sess; MS.xp = xp;
+  if (m.quietEnd && complete) { $('#mdText').textContent = 'Sleep well.'; setTimeout(() => { medClose(); }, 4000); return; }
+  $('#mdBody').innerHTML = `<div class="gmtop"><span></span><span></span><span></span></div>
+    <p class="eyebrow">${mins} min · ${esc(m.name)}${lessonDone ? ' · lesson ' + S.med.course + ' done' : ''}</p><h2>${complete ? 'Well sat.' : 'Every minute counts.'}</h2>
+    <p class="label">How calm do you feel now?</p><div class="seg5">${[1, 2, 3, 4, 5].map(n => `<button data-act="medAfter" data-n="${n}">${n}</button>`).join('')}</div>
+    <button class="btn wide" data-act="medAfter" data-n="0">Skip</button>`;
+}
+function medClose() {
+  clearInterval(mT); try { speechSynthesis.cancel(); } catch (e) {} try { mWake && mWake.release(); } catch (e) {} mWake = null;
+  $('#md').classList.remove('on'); MS = null; render();
+}
+
 /* --- Journal --- */
 function daySummary(d) {
   const L = peek(d), items = itemsFor(d).filter(i => i.kind === 'quest'), done = items.filter(i => L.q[i.key]).length, g = S.gym[d];
@@ -616,6 +748,7 @@ function daySummary(d) {
   if (L.water) parts.push((L.water * .25).toFixed(2).replace(/\.?0+$/, '') + ' L water');
   if (L.protein) parts.push(L.protein + ' g protein');
   if (L.sleep != null) parts.push('slept ' + L.sleep + ' h');
+  if (medMinutes(d)) parts.push('meditated ' + medMinutes(d) + ' min');
   for (const h of S.habits) { const x = hx(L, h.id); if (x.n || x.r) parts.push(h.name + ' ' + x.n + (x.r ? ' (resisted ' + x.r + ')' : '')); }
   return parts.join(' · ');
 }
@@ -624,7 +757,7 @@ function viewJournal() {
   const entries = Object.keys(S.logs).filter(x => S.logs[x].j && (S.logs[x].j.win || S.logs[x].j.note || S.logs[x].j.mood)).sort().reverse()
     .filter(x => !JQ || JSON.stringify(S.logs[x].j).toLowerCase().includes(JQ.toLowerCase()));
   const sym = (j.sym || []);
-  return `<header class="head"><div class="daynav"><button class="icon" data-act="day" data-n="-1" aria-label="Previous day">‹</button><p class="date">${esc(fmtDay(d))}</p><button class="icon" data-act="day" data-n="1" aria-label="Next day">›</button></div><h1>Journal</h1></header>
+  return `<header class="head"><div class="daynav"><button class="icon" data-act="day" data-n="-1" aria-label="Previous day">‹</button><p class="date">${esc(fmtDay(d))}</p><button class="icon" data-act="day" data-n="1" aria-label="Next day">›</button></div></header>
   <div class="card summary"><p class="eyebrow">The day in numbers</p><p>${esc(daySummary(d))}</p>${c ? `<p class="hint">Cycle day ${c.cd} · ${esc(C.phases[c.ph].name)}</p>` : ''}</div>
   <div class="card"><p class="label">Mood</p><div class="seg5 words">${C.moods.map((m, i) => `<button class="${j.mood === i + 1 ? 'on' : ''}" data-act="jmood" data-n="${i + 1}">${m}</button>`).join('')}</div>
     <p class="label">Energy</p><div class="seg5">${[1, 2, 3, 4, 5].map(n => `<button class="${L.energy === n ? 'on' : ''}" data-act="energy" data-d="${d}" data-n="${n}">${n}</button>`).join('')}</div>
@@ -830,7 +963,8 @@ async function syncReminders() {
 const A = {
   go: el => { location.hash = el.dataset.v; closeSheet(); },
   day: el => { DAY = addDays(DAY, +el.dataset.n); render(); },
-  tick: el => { const i = itemByKey(el.dataset.d, el.dataset.k); if (!i) return; if (i.tag === 'gym' && !i.gentle && !peek(el.dataset.d).q[i.key]) { location.hash = 'gym'; return; } closeSheet(); toggle(el.dataset.d, i); },
+  tick: el => { const i = itemByKey(el.dataset.d, el.dataset.k); if (!i) return; if (i.tag === 'gym' && !i.gentle && !peek(el.dataset.d).q[i.key]) { location.hash = 'gym'; return; }
+    if (i.tag === 'meditate' && !peek(el.dataset.d).q[i.key] && el.dataset.d === TODAY) { MIND_TAB = 'med'; closeSheet(); if (location.hash === '#mind') render(); else location.hash = 'mind'; return; } closeSheet(); toggle(el.dataset.d, i); },
   item: el => sheetItem(el.dataset.d, el.dataset.k),
   slot: el => sheetSlot(el.dataset.d, el.dataset.s, el.dataset.e, !!el.dataset.soc),
   slotPick: el => { const d = el.dataset.d, s = freeSlots(d, itemsFor(d))[0]; if (s) sheetSlot(d, s.start, s.end, s.social); else toast('No free slot left that day'); },
@@ -894,6 +1028,14 @@ const A = {
   jmood: el => { const L = log(DAY); L.j = L.j || {}; L.j.mood = +el.dataset.n; L.j.savedAt = Date.now(); save(); render(); },
   jsym: el => { const L = log(DAY); L.j = L.j || {}; const s = L.j.sym = L.j.sym || []; const v = el.dataset.s; L.j.sym = s.includes(v) ? s.filter(x => x !== v) : [...s, v]; save(); render(); },
   jopen: el => { DAY = el.dataset.d; render(); window.scrollTo(0, 0); },
+  mtab: el => { MIND_TAB = el.dataset.t; render(); },
+  medOpen: el => medOpen(el.dataset.id, +el.dataset.m, !!el.dataset.lesson),
+  medBefore: el => { MS.before = +el.dataset.n; $$('#mdBefore button').forEach(b => b.classList.toggle('on', b === el)); },
+  medBegin: () => medBegin(),
+  medPause: () => medPause(),
+  medEnd: () => { if (MS && MS.started) medEnd(false); else medClose(); },
+  medClose: () => medClose(),
+  medAfter: el => { const n = +el.dataset.n, s = MS && MS.sess, xp = MS ? MS.xp : 0; if (s && n) { s.after = n; save(); } medClose(); reward({ tag: 'meditate' }, xp); },
   settings: () => sheetSettings(),
   makeTopic: () => { const a = 'abcdefghijkmnpqrstuvwxyz23456789'; let t = 'lq-'; const r = crypto.getRandomValues(new Uint8Array(18)); r.forEach(x => t += a[x % a.length]); S.settings.topic = t; save(); sheetSettings(); },
   copyTopic: el => { navigator.clipboard && navigator.clipboard.writeText(S.settings.topic).then(() => toast('Copied'), () => toast('Long-press the topic to copy')); },
@@ -929,6 +1071,7 @@ const A = {
 const CH = {
   periodDate: el => { if (el.value && !S.periods.includes(el.value)) { S.periods.push(el.value); save(); render(); toast('Period logged'); } },
   remindOpt: el => { S.settings.remind[el.dataset.k] = el.checked; save(); },
+  medVoice: el => { S.med.voice = el.checked; save(); if (el.checked) say('Voice guidance is on.'); },
   import: el => {
     const f = el.files[0]; if (!f) return;
     f.text().then(t => { const x = JSON.parse(t); if (x.v !== 2) throw 0; S = Object.assign(fresh(), x); save(); closeSheet(); render(); toast('Backup restored'); }).catch(() => toast('That file is not a Life Quest backup'));
@@ -993,9 +1136,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet
 
 /* ---------- routing + lifecycle ---------- */
 function route() {
-  const v = location.hash.slice(1);
-  VIEW = ['today', 'plan', 'gym', 'journal', 'garden'].includes(v) ? v : 'today';
-  if (VIEW !== 'today' && VIEW !== 'journal') DAY = TODAY;
+  let v = location.hash.slice(1);
+  if (v === 'journal') { v = 'mind'; MIND_TAB = 'journal'; }
+  VIEW = ['today', 'plan', 'gym', 'mind', 'garden'].includes(v) ? v : 'today';
+  if (VIEW !== 'today' && VIEW !== 'mind') DAY = TODAY;
   render(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
@@ -1005,6 +1149,7 @@ document.addEventListener('visibilitychange', () => {
   if (t !== TODAY) { if (DAY === TODAY) DAY = t; if (PLAN_DAY === TODAY) PLAN_DAY = t; TODAY = t; }
   render(); syncReminders();
   if (restEnd) tickRest();
+  if (MS && MS.started) medTick();
 });
 if (S.draft && S.draft.date !== TODAY) S.draft = null;
 route();

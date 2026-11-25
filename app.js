@@ -393,31 +393,53 @@ function render() {
 }
 
 /* --- shared timeline --- */
+const CHEV = { up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>', down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' };
+let ARR_MODE = 'one';
 function timeline(d, opts = {}) {
-  const items = itemsFor(d), L = peek(d), slots = freeSlots(d, items);
+  const items = itemsFor(d), L = peek(d), slots = freeSlots(d, items), arr = !!S.arrange;
   const rows = [];
   items.filter(i => i.kind !== 'open').forEach(i => rows.push({ t: i.start, i }));
   slots.forEach(s => rows.push({ t: s.start, s }));
   rows.sort((a, b) => a.t.localeCompare(b.t) || (a.s ? 1 : -1));
   const nowM = d === TODAY ? nowMin() : -1;
-  return `<div class="tl">${rows.map(r => {
+  const ins = t => arr ? `<div class="ins"><button data-act="ins" data-d="${d}" data-t="${t}" aria-label="Add something at ${t}"><span>+</span></button></div>` : '';
+  const bar = `<div class="arrbar${arr ? ' on' : ''}">${arr
+    ? `<div class="seg mini2">${[['one', 'Move one'], ['rest', 'Move + all after']].map(([k, n]) => `<button class="${ARR_MODE === k ? 'on' : ''}" data-act="arrMode" data-m="${k}">${n}</button>`).join('')}</div><button class="btn small primary" data-act="arrange">Done</button>`
+    : `<span class="hint">Tap a plan to open it</span><button class="btn small" data-act="arrange">↕ Arrange · +</button>`}</div>`;
+  let prevEnd = rows.length ? fromMin(Math.max(0, toMin(rows[0].t) - 60)) : '09:00';
+  return `${bar}<div class="tl${arr ? ' arr' : ''}">${rows.map(r => {
+    const before = ins(prevEnd);
     if (r.s) {
+      prevEnd = r.s.end;
       const sug = suggest(d, r.s.mins, r.s.social).slice(0, 3);
-      return `<div class="slot"><div class="time">${r.s.start}</div><button class="slotbox" data-act="slot" data-d="${d}" data-s="${r.s.start}" data-e="${r.s.end}" data-soc="${r.s.social ? 1 : ''}">
+      return before + `<div class="slot"><div class="time">${r.s.start}</div><button class="slotbox" data-act="slot" data-d="${d}" data-s="${r.s.start}" data-e="${r.s.end}" data-soc="${r.s.social ? 1 : ''}">
         <span class="slothead">${r.s.social ? 'Open · social time' : 'Free'} · ${fmtDur(r.s.mins)}</span>
         ${sug.length ? `<span class="fits">${sug.map(x => esc(x.type === 'todo' ? x.t.title : x.a.title)).join(' · ')}</span>` : '<span class="fits">Tap to plan something</span>'}
       </button></div>`;
     }
     const i = r.i, c = C.cats[i.cat] || C.cats.mind, done = !!L.q[i.key];
+    prevEnd = i.end;
     const live = nowM >= toMin(i.start) && nowM < toMin(i.end);
-    return `<div class="item${done ? ' done' : ''}${live ? ' live' : ''}" style="--c:${c.color};--cs:${c.soft}">
+    const right = arr
+      ? (i.src === 'commute' ? '<span class="fixed"></span>' : `<div class="nudge"><button data-act="nudge" data-d="${d}" data-k="${esc(i.key)}" data-n="-15" aria-label="15 min earlier">${CHEV.up}</button><button data-act="nudge" data-d="${d}" data-k="${esc(i.key)}" data-n="15" aria-label="15 min later">${CHEV.down}</button></div>`)
+      : i.kind === 'quest' ? `<button class="check" data-act="tick" data-d="${d}" data-k="${esc(i.key)}" aria-label="${done ? 'Undo' : 'Done'}: ${esc(i.title)}" aria-pressed="${done}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>` : (i.tag === 'commute' ? '<span class="fixed"></span>' : '<span class="fixed">fixed</span>');
+    return before + `<div class="item${done ? ' done' : ''}${live ? ' live' : ''}${i.moved ? ' moved' : ''}" style="--c:${c.color};--cs:${c.soft}">
       <div class="time">${i.start}<small>${i.end}</small></div>
       <button class="body" data-act="item" data-d="${d}" data-k="${esc(i.key)}"><span class="title">${esc(i.title)}</span>
-        <span class="meta">${esc(c.name)}${i.xp ? ' · +' + i.xp + ' XP' : ''}${i.tag === 'gym' && !i.gentle ? ' · ' + esc(C.gymModes[gymMode(d)].label) : ''}</span></button>
-      ${i.kind === 'quest' ? `<button class="check" data-act="tick" data-d="${d}" data-k="${esc(i.key)}" aria-label="${done ? 'Undo' : 'Done'}: ${esc(i.title)}" aria-pressed="${done}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>` : (i.tag === 'commute' ? '<span class="fixed"></span>' : '<span class="fixed">fixed</span>')}
+        <span class="meta">${esc(c.name)}${i.xp ? ' · +' + i.xp + ' XP' : ''}${i.tag === 'gym' && !i.gentle ? ' · ' + esc(C.gymModes[gymMode(d)].label) : ''}${i.moved ? ' · moved' : ''}</span></button>
+      ${right}
     </div>`;
-  }).join('')}</div>`;
+  }).join('')}${ins(prevEnd)}</div>${arr && Object.keys(S.ovr[d] || {}).length ? `<button class="link" data-act="resetDay" data-d="${d}">Reset this day's times</button>` : ''}`;
+}
+function sheetInsert(d, t) {
+  const sug = suggest(d, 240, false);
+  openSheet(`<p class="eyebrow">${esc(fmtDay(d))} · at ${t}</p><h2>Add something here</h2>
+    <p class="hint">Later plans move back to make room.</p>
+    <div class="list">${sug.map(x => x.type === 'todo'
+      ? `<button class="li tap row between" data-act="slotTodo" data-room="1" data-id="${x.t.id}" data-d="${d}" data-s="${t}"><span><i class="dot" style="background:${C.cats[x.t.cat].color}"></i>${esc(x.t.title)}</span><span class="hint">${fmtDur(x.t.mins)}</span></button>`
+      : `<button class="li tap row between" data-act="slotAct" data-room="1" data-id="${x.a.id}" data-d="${d}" data-s="${t}"><span><i class="dot" style="background:${C.cats[x.a.cat].color}"></i>${esc(x.a.title)}</span><span class="hint">${fmtDur(x.a.mins)}</span></button>`).join('')}</div>
+    <details class="li" open><summary>Appointment, meet-up or anything else</summary>${eventForm({ date: d, start: t, end: addMin(t, 60), cat: 'social', xp: 15, remind: 15, room: true })}</details>`);
 }
 function itemByKey(d, k) { return itemsFor(d).find(i => i.key === k); }
 
@@ -521,7 +543,7 @@ function viewPlan() {
   return `<header class="head"><h1>Plan</h1></header>
     <div class="seg">${[['cal', 'Calendar'], ['todo', 'To-do'], ['act', 'Activities']].map(([k, n]) => `<button class="${PLAN_TAB === k ? 'on' : ''}" data-act="ptab" data-t="${k}">${n}</button>`).join('')}</div>
     ${body}
-    <button class="fab" data-act="add" data-d="${PLAN_DAY}" aria-label="Add">+</button>`;
+    ${S.arrange ? '' : `<button class="fab" data-act="add" data-d="${PLAN_DAY}" aria-label="Add">+</button>`}`;
 }
 function todoRow(t) {
   const c = C.cats[t.cat] || C.cats.mind;
@@ -1072,10 +1094,22 @@ const A = {
   slotPick: el => { const d = el.dataset.d, s = freeSlots(d, itemsFor(d))[0]; if (s) sheetSlot(d, s.start, s.end, s.social); else toast('No free slot left that day'); },
   slotAct: el => {
     const a = S.activities.find(x => x.id === el.dataset.id), s = el.dataset.s, slotEnd = toMin(el.dataset.e || '23:59');
-    S.events.push({ id: uid(), date: el.dataset.d, title: a.title, cat: a.cat, start: s, end: fromMin(Math.min(toMin(s) + a.mins, slotEnd)), xp: a.xp, act: a.id, remind: 15 });
+    const nid = uid(), en = fromMin(Math.min(toMin(s) + a.mins, el.dataset.room ? 1439 : slotEnd));
+    S.events.push({ id: nid, date: el.dataset.d, title: a.title, cat: a.cat, start: s, end: en, xp: a.xp, act: a.id, remind: 15 });
+    if (el.dataset.room) makeRoom(el.dataset.d, 'e:' + nid, s, en);
     save(); closeSheet(); render(); toast('Planned: ' + a.title);
   },
-  slotTodo: el => { const t = S.todos.find(x => x.id === el.dataset.id); t.plan = { date: el.dataset.d, start: el.dataset.s }; save(); closeSheet(); render(); toast('Planned: ' + t.title); },
+  slotTodo: el => { const t = S.todos.find(x => x.id === el.dataset.id); t.plan = { date: el.dataset.d, start: el.dataset.s }; if (el.dataset.room) makeRoom(el.dataset.d, 't:' + t.id, t.plan.start, addMin(t.plan.start, t.mins)); save(); closeSheet(); render(); toast('Planned: ' + t.title); },
+  arrange: () => { S.arrange = !S.arrange; save(); render(); },
+  arrMode: el => { ARR_MODE = el.dataset.m; render(); },
+  ins: el => sheetInsert(el.dataset.d, el.dataset.t),
+  nudge: el => {
+    const d = el.dataset.d, it = itemByKey(d, el.dataset.k), n = +el.dataset.n; if (!it) return;
+    const y = window.scrollY;
+    if (ARR_MODE === 'rest') { const s = toMin(it.start); itemsFor(d).filter(i => i.key === it.key || (movable(i) && toMin(i.start) >= s)).forEach(i => shiftItem(d, i, n)); }
+    else shiftItem(d, it, n);
+    save(); render(); window.scrollTo(0, y);
+  },
   weeklyDone: el => { const a = S.activities.find(x => x.id === el.dataset.id), d = el.dataset.d; const L = log(d), k = 'w:' + a.id + ':' + uid(); L.q[k] = { xp: a.xp, cat: a.cat, tag: 'w:' + a.id }; save(); render(); reward({ tag: a.id }, a.xp); },
   motto: el => { const d = el.dataset.d; openSheet(`<h2>Motto of the day</h2><form data-form="motto" class="form"><input type="hidden" name="d" value="${d}"><textarea name="m" rows="3">${esc(motto(d))}</textarea><div class="row gap"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" data-act="mottoNew" data-d="${d}">Another one</button></div></form>`); },
   mottoNew: el => { const L = log(el.dataset.d); const c = cycle(el.dataset.d); const pool = C.mottos.filter(m => !m.phase || (c && m.phase === c.ph)); L.motto = pool[Math.floor(Math.random() * pool.length)].t; save(); closeSheet(); render(); },

@@ -1,6 +1,6 @@
 /* Life Quest — content. Everything the app says lives here, so it can be edited without touching logic. */
 window.LQ = {
-  version: "2.3.0",
+  version: "2.3.1",
 
   cats: {
     work:   { name: "Work & fixed",  color: "#C67A78", soft: "#FCE1DF" },

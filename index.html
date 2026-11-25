@@ -226,6 +226,20 @@ b .link{font-size:13px;font-weight:600;margin-left:6px;min-height:0;padding:0}
 .levelup{text-align:center}.levelup .plant svg{width:200px;height:auto}
 #gm .li.done .grow{color:var(--mut);text-decoration:line-through}
 #gm .list .li a.link{flex:none}
+/* arrange mode */
+.arrbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px}
+.arrbar .hint{margin:0}
+.arrbar .seg{margin:0;flex:1}
+.seg.mini2 button{min-height:36px;font-size:14px}
+.nudge{display:flex;flex-direction:column;gap:4px}
+.nudge button{width:44px;height:30px;border-radius:10px;background:var(--fill);display:grid;place-items:center;color:var(--acc)}
+.nudge svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ins{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;height:26px;align-items:center}
+.ins button{grid-column:2;height:26px;position:relative;display:flex;align-items:center;justify-content:center}
+.ins button::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1.5px dashed var(--line)}
+.ins span{position:relative;width:26px;height:26px;border-radius:50%;background:var(--acc);color:var(--accink);font-size:18px;font-weight:600;line-height:26px;text-align:center}
+.tl.arr .item,.tl.arr .slot{padding:1px 0}
+.item.moved .body{box-shadow:0 1px 0 var(--line),inset 0 0 0 1.5px color-mix(in srgb,var(--c) 45%,transparent)}
 /* journal */
 .summary p:not(.eyebrow){font-weight:500}
 /* garden */

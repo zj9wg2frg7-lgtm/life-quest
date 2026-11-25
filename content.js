@@ -1,0 +1,383 @@
+/* Life Quest — content. Everything the app says lives here, so it can be edited without touching logic. */
+window.LQ = {
+  version: "2.1.0",
+
+  cats: {
+    work:   { name: "Work & fixed",  color: "#C67A78", soft: "#FCE1DF" },
+    train:  { name: "Training",      color: "#C0815A", soft: "#F9E3D6" },
+    body:   { name: "Body care",     color: "#66A373", soft: "#DBEEDE" },
+    career: { name: "Career",        color: "#589AC7", soft: "#D7EBFA" },
+    home:   { name: "Home",          color: "#AA8F49", soft: "#F0E7D2" },
+    mind:   { name: "Mind",          color: "#9686C6", soft: "#E9E4FA" },
+    social: { name: "Social & joy",  color: "#BE7A9A", soft: "#F9E0EB" },
+    travel: { name: "Commute",       color: "#8E948F", soft: "#E8EAE7" }
+  },
+
+  /* Base routine. kind: quest (tick for XP) · fixed (no tick) · open (free time window) · gym. travel = minutes of commute before AND after. */
+  routineVersion: 3,
+  routine: [
+    { id: "morning", tag: "morning", cat: "body", title: "Morning reset", days: [0,1,2,3,4,5,6], start: "07:00", end: "07:30", xp: 10, remind: 0,
+      note: "500 ml water before coffee · breakfast with protein · vitamin D + omega-3 + creatine · 5 min daylight." },
+    { id: "job1", tag: "job", cat: "career", title: "Job hunt: 1 application", days: [0,1,4], start: "08:15", end: "09:45", xp: 40, remind: 0,
+      note: "Win condition: 1 tailored application OR 1 serious lead (message, call, follow-up). Pick the job in the first 10 minutes." },
+    { id: "job2", tag: "job", cat: "career", title: "Job hunt: 1 application", days: [2,3], start: "09:00", end: "10:30", xp: 40, remind: 0,
+      note: "Win condition: 1 tailored application OR 1 serious lead (message, call, follow-up). Pick the job in the first 10 minutes." },
+    { id: "gymA", tag: "gym", kind: "gym", session: "LA", cat: "train", title: "Gym · Lower A", days: [0], start: "10:15", end: "11:45", xp: 60, remind: 10, travel: 30 },
+    { id: "gymB", tag: "gym", kind: "gym", session: "UA", cat: "train", title: "Gym · Upper A", days: [1], start: "10:15", end: "11:45", xp: 60, remind: 10, travel: 30 },
+    { id: "gymC", tag: "gym", kind: "gym", session: "LB", cat: "train", title: "Gym · Lower B", days: [4], start: "10:15", end: "11:45", xp: 60, remind: 10, travel: 30 },
+    { id: "gymD", tag: "gym", kind: "gym", session: "UB", cat: "train", title: "Gym · Upper B", days: [5], start: "11:00", end: "12:30", xp: 60, remind: 10, travel: 30 },
+    { id: "mit1", tag: "mit", cat: "career", title: "Power hour: most important task", days: [0,1,4], start: "13:30", end: "14:30", xp: 25,
+      note: "One task that moves life forward. Pick it from your to-do list the evening before." },
+    { id: "mit2", tag: "mit", cat: "career", title: "Power hour: most important task", days: [2,3], start: "11:00", end: "12:00", xp: 25,
+      note: "One task that moves life forward. Pick it from your to-do list the evening before." },
+    { id: "tennis", tag: "tennis", cat: "train", title: "Tennis", days: [2], start: "14:00", end: "15:15", xp: 40, remind: 10, travel: 30,
+      note: "Your cardio + agility day. Knee stretches from the Daily 10 afterwards." },
+    { id: "premeal1", tag: "premeal", cat: "body", title: "Pre-work meal", days: [1], start: "14:45", end: "15:15", xp: 10, remind: 0,
+      note: "Proper meal, ~30 g protein, so you don't get home at 21:00 starving. Pack a snack." },
+    { id: "premealW", tag: "premeal", cat: "body", title: "Proper lunch before tennis + work", days: [2], start: "12:45", end: "13:15", xp: 10, remind: 0,
+      note: "Today you go from tennis straight to work, so eat properly now (~30 g protein) and pack a snack for 18:00." },
+    { id: "premeal2", tag: "premeal", cat: "body", title: "Pre-work meal", days: [3], start: "16:15", end: "16:45", xp: 10, remind: 0, skip: ["2026-11-26"],
+      note: "Proper meal, ~30 g protein, before the evening shift." },
+    { id: "work1", tag: "work", kind: "fixed", cat: "work", title: "Work", days: [1,2], start: "16:00", end: "20:30", travel: 30 },
+    { id: "work2", tag: "work", kind: "fixed", cat: "work", title: "Work", days: [3], start: "17:30", end: "19:00", travel: 30 },
+    { id: "groceries", tag: "groceries", cat: "home", title: "Groceries", days: [5], start: "13:30", end: "14:30", xp: 15,
+      note: "Shop from the list you made on Sunday." },
+    { id: "clean", tag: "clean", cat: "home", title: "Apartment reset + laundry", days: [6], start: "10:00", end: "11:30", xp: 50, remind: 0,
+      note: "Laundry in first. Kitchen → bathroom → floors → bedding every 2nd week → hang laundry." },
+    { id: "mealprep", tag: "mealprep", cat: "home", title: "Meal prep", days: [6], start: "17:00", end: "18:30", xp: 30,
+      note: "2 proteins + 1 grain + a tray of roasted veg. 6–8 boxes for the work days." },
+    { id: "review", tag: "review", cat: "mind", title: "Weekly review + plan", days: [6], start: "19:00", end: "19:30", xp: 30, remind: 0,
+      note: "Look at the week in Garden. Plan 5 jobs, the grocery list, next week's power-hour tasks, and when you'll call Mom." },
+    { id: "read", tag: "read", cat: "mind", title: "Reading", days: [0,3,6], start: "20:30", end: "21:30", xp: 20,
+      note: "Phone in another room. 20 pages counts." },
+    { id: "stretch", tag: "stretch", cat: "body", title: "Daily 10 — stretch & physio", days: [0,1,2,3,4,5,6], start: "22:00", end: "22:15", xp: 15, remind: 0 },
+    { id: "wind", tag: "wind", cat: "body", title: "Wind-down + face massage", days: [0,1,2,3,4,5,6], start: "22:30", end: "23:00", xp: 10, remind: 0,
+      note: "Screens away · 5-min face massage (forehead, jaw, under-eyes, neck — light upward strokes with oil) · skincare · magnesium · lights out 23:00." },
+    { id: "open1", tag: "open", kind: "open", cat: "social", title: "Open time", days: [0], start: "17:00", end: "20:00" },
+    { id: "open2", tag: "open", kind: "open", cat: "social", title: "Open time", days: [4], start: "18:00", end: "22:00" },
+    { id: "open3", tag: "open", kind: "open", cat: "social", title: "Open time", days: [5], start: "15:00", end: "22:00" },
+    { id: "open4", tag: "open", kind: "open", cat: "social", title: "Open time", days: [6], start: "12:00", end: "16:30" }
+  ],
+
+  events: [
+    { id: "freizi1126", date: "2026-11-26", title: "Freizi", cat: "work", start: "16:00", end: "17:30", xp: 0, travel: 30 }
+  ],
+
+  activities: [
+    { id: "mom", title: "Call Mom", cat: "social", mins: 30, xp: 30, weekly: 1 },
+    { id: "sis", title: "Roblox with my sister", cat: "social", mins: 60, xp: 30, weekly: 1 },
+    { id: "readact", title: "Reading", cat: "mind", mins: 45, xp: 20 },
+    { id: "movie", title: "Movie night", cat: "social", mins: 120, xp: 15 },
+    { id: "friend", title: "Meet a friend", cat: "social", mins: 90, xp: 25 },
+    { id: "date", title: "Date night", cat: "social", mins: 150, xp: 20 },
+    { id: "walk", title: "Walk outside", cat: "body", mins: 30, xp: 15 },
+    { id: "boulder", title: "Bouldering", cat: "train", mins: 90, xp: 40 },
+    { id: "bike", title: "Bike ride", cat: "train", mins: 45, xp: 25 },
+    { id: "yoga", title: "Yoga flow", cat: "body", mins: 25, xp: 15 },
+    { id: "bath", title: "Bath + face care", cat: "body", mins: 40, xp: 10 },
+    { id: "nap", title: "Power nap", cat: "body", mins: 20, xp: 5 },
+    { id: "tidy", title: "10-minute tidy", cat: "home", mins: 15, xp: 10 },
+    { id: "laundry", title: "Extra laundry", cat: "home", mins: 20, xp: 10 },
+    { id: "cook", title: "Cook something new", cat: "home", mins: 60, xp: 15 },
+    { id: "journal", title: "Journal / think", cat: "mind", mins: 15, xp: 10 },
+    { id: "learn", title: "Learn something (course, podcast)", cat: "mind", mins: 30, xp: 15 }
+  ],
+
+  /* Cycle phases. Day ranges are computed from your own cycle length in the app. */
+  phases: {
+    rest:   { name: "Rest days", short: "Days 1–2", color: "#BE7A9A",
+              text: "Only essentials are planned. Gym becomes a gentle walk + stretching, cleaning moves, streaks pause instead of breaking.",
+              gym: "gentle" },
+    period: { name: "Period", short: "Days 3–5", color: "#C67A78",
+              text: "Train normally if you feel okay, but keep the same weights and stop 2–3 reps before failure. Iron-rich food helps.",
+              gym: "steady" },
+    follicular: { name: "Rising energy", short: "Follicular", color: "#66A373",
+              text: "Usually your strongest stretch. Push weights, do the hardest applications, start new things.",
+              gym: "push" },
+    ovulation: { name: "Peak", short: "Around ovulation", color: "#AA8F49",
+              text: "Often the most social, confident days. Good for networking, interviews and meeting people.",
+              gym: "push" },
+    luteal: { name: "Steady", short: "Luteal", color: "#589AC7",
+              text: "Normal routine. Focus work, finishing things, steady training.",
+              gym: "normal" },
+    late:   { name: "Wind-down", short: "Pre-period", color: "#9686C6",
+              text: "Same routine, lower intensity. Hold your weights, sleep a bit more, plan snacks with protein. Fewer big social plans.",
+              gym: "hold" }
+  },
+
+  gymModes: {
+    push:   { label: "Push day", text: "Progression on: if you hit the top of the range last time, the weight goes up." },
+    normal: { label: "Normal", text: "Progression on." },
+    steady: { label: "Steady", text: "Same weights as last time, 2–3 reps in reserve. No increases this week." },
+    hold:   { label: "Hold", text: "Keep last week's weights. You may drop the last set of each exercise if you feel flat." },
+    gentle: { label: "Gentle", text: "No gym today: 20–30 min walk + Daily 10. Counts as your session." },
+    deload: { label: "Deload", text: "Recovery week: 2 sets per exercise at ~80 % of your usual weight." }
+  },
+
+  deload: [["2026-12-21", "2026-12-27"]],
+
+  warmups: {
+    lower: ["5 min bike, easy", "Cat-cow ×10", "Belly breathing + brace, 5 breaths", "Dead bug 2×8/side", "Glute bridge 2×12, 2 s squeeze",
+            "Banded clamshell 2×15/side", "Terminal knee extension (band) 2×15/side", "Couch stretch 30 s/side", "Hamstring floss ×10/side"],
+    upper: ["5 min rower or cross-trainer, easy", "Cat-cow ×10", "Open books ×8/side", "Wall slides 2×10", "Band pull-aparts 2×15",
+            "Scapular push-ups 2×10", "Bird dog 2×6/side, 3 s hold", "Terminal knee extension ×15/side", "Quad stretch 30 s/side"]
+  },
+
+  home: ["Cat-cow ×10", "Dead bug ×8/side — lower back pressed into the floor", "Glute bridge ×15, 2 s squeeze", "Bird dog ×6/side",
+         "Couch / hip-flexor stretch 30 s/side", "Straight-leg raise ×10/side (knee)", "Hamstring stretch 30 s/side", "Child's pose 30 s", "Doorway chest stretch 30 s"],
+  homeMin: "Bad day? 5-minute minimum: cat-cow, dead bug, glute bridge, couch stretch. Still counts.",
+
+  /* unit: kg (default) · bw · sec · level · carry. inc < 0 = assistance goes down. rest in seconds. */
+  sessions: {
+    LA: { name: "Lower A", focus: "Glutes + core", warm: "lower", cardio: "20 min incline walk, 8–10 %, ~5 km/h (bike if knees complain)",
+      ex: [
+        { id: "hipthrust", name: "Hip thrust", sets: 4, lo: 8, hi: 12, start: 30, inc: 5, rest: 120, cue: "Chin tucked, ribs down, pause 1 s at the top. Push through your heels.", alt: "Glute bridge machine or single-leg glute bridge" },
+        { id: "goblet", name: "Goblet squat to box", sets: 3, lo: 8, hi: 12, start: 10, inc: 2, rest: 120, cue: "Sit back to a box at a pain-free depth. Knees track over toes.", alt: "Leg press, feet mid-platform, short range" },
+        { id: "rdl", name: "Dumbbell Romanian deadlift", per: true, sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 120, cue: "Brace first, push hips back, spine neutral. Go down until hamstrings stretch, don't cut it short.", alt: "Cable pull-through" },
+        { id: "legpress", name: "Leg press, feet high & wide", sets: 3, lo: 10, hi: 12, start: 60, inc: 5, rest: 120, cue: "High feet = more glute, less knee. Lower back stays on the pad.", alt: "Goblet squat to a higher box" },
+        { id: "abduct", name: "Hip abduction machine", sets: 3, lo: 12, hi: 20, start: 25, inc: 5, rest: 75, cue: "Lean slightly forward for the upper glute. Slow on the way back.", alt: "Banded lateral walk, 3 × 15 steps/side" },
+        { id: "pallof", name: "Pallof press, per side", sets: 3, lo: 10, hi: 12, start: 5, inc: 2.5, rest: 60, cue: "Hips and ribs don't move. Anti-rotation = real core strength.", alt: "Dead bug" },
+        { id: "sideplank", name: "Side plank", unit: "sec", sets: 2, lo: 20, hi: 40, rest: 45, cue: "Straight line ear–hip–ankle. Knees-down version is fine.", alt: "Side plank on knees" }
+      ] },
+    UA: { name: "Upper A", focus: "Back + shoulder blades", warm: "upper", cardio: "20 min cross-trainer: 6 × (1 min hard / 2 min easy) + 2 min easy",
+      ex: [
+        { id: "latpull", name: "Lat pulldown", sets: 4, lo: 8, hi: 12, start: 35, inc: 2.5, rest: 120, cue: "Shoulders down first, then pull elbows to your back pockets. No leaning back.", alt: "Assisted pull-up" },
+        { id: "cablerow", name: "Seated cable row", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 90, cue: "Squeeze shoulder blades together for 1 s. Chest tall.", alt: "Machine row" },
+        { id: "pushup", name: "Push-up — ladder level", unit: "level", sets: 3, lo: 6, hi: 12, rest: 90, cue: "One straight plank, elbows ~45°. Stop 1 rep before form breaks.", alt: "One level easier" },
+        { id: "machrow", name: "Chest-supported machine row", sets: 3, lo: 10, hi: 12, start: 17.5, inc: 2.5, rest: 90, cue: "Chest stays on the pad — zero load on the lower back.", alt: "One-arm dumbbell row" },
+        { id: "facepull", name: "Face pull (rope)", sets: 3, lo: 12, hi: 15, start: 7.5, inc: 2.5, rest: 60, cue: "Pull to your forehead, thumbs back. The shoulder-blade health exercise.", alt: "Band pull-aparts" },
+        { id: "ohp", name: "Seated dumbbell shoulder press", per: true, sets: 3, lo: 8, hi: 12, start: 5, inc: 1, rest: 90, cue: "Back against the bench, ribs down.", alt: "Machine shoulder press" },
+        { id: "yraise", name: "Prone Y-raise on incline bench", per: true, sets: 2, lo: 10, hi: 15, start: 1, inc: 1, rest: 60, cue: "Thumbs up, lift with the lower traps. Tiny weights are normal.", alt: "Prone Y-raise without weight" },
+        { id: "deadbug", name: "Dead bug, per side", unit: "bw", sets: 3, lo: 8, hi: 10, rest: 45, cue: "Lower back glued to the floor. Breathe out as you extend.", alt: "Bird dog" }
+      ] },
+    LB: { name: "Lower B", focus: "Glutes + hamstrings", warm: "lower", cardio: "20 min bike, steady — you can still talk",
+      ex: [
+        { id: "bulgarian", name: "Bulgarian split squat", per: true, sets: 3, lo: 8, hi: 10, start: 7, inc: 1, rest: 120, cue: "Slight forward lean = more glute. Front knee tracks over toes. Hold a rack for balance if needed.", alt: "Split squat with back foot on the floor" },
+        { id: "backext", name: "45° back extension (added kg)", sets: 3, lo: 10, hi: 15, start: 0, inc: 2.5, rest: 90, cue: "Round your upper back slightly and squeeze glutes to come up. Builds a stronger lower back safely. Stop if back pain increases.", alt: "Glute bridge 3 × 15" },
+        { id: "pullthru", name: "Cable pull-through", sets: 3, lo: 10, hi: 15, start: 15, inc: 2.5, rest: 90, cue: "Hinge, not squat. Snap hips forward and squeeze.", alt: "Kettlebell deadlift" },
+        { id: "hamcurl", name: "Hamstring curl machine", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 75, cue: "3 s on the way back.", alt: "Swiss-ball hamstring curl" },
+        { id: "stepup", name: "Step-up to low box", per: true, sets: 2, lo: 8, hi: 10, start: 0, inc: 1, rest: 75, cue: "Drive through the whole foot of the top leg. Practical strength for stairs and life.", alt: "Lateral step-up, lower box" },
+        { id: "farmer", name: "Farmer carry, 30 m", unit: "carry", per: true, sets: 3, lo: 1, hi: 1, start: 10, inc: 2, rest: 75, cue: "Tall posture, short quick steps. Core, grip and shoulders at once.", alt: "Suitcase carry" }
+      ] },
+    UB: { name: "Upper B", focus: "Arms, chest, push-ups", warm: "upper", cardio: "20 min stair-climber or incline walk",
+      ex: [
+        { id: "assistpull", name: "Assisted pull-up (assist kg)", sets: 3, lo: 6, hi: 8, start: 35, inc: -2.5, rest: 120, cue: "Full hang to chin over the bar. Progress = less assistance.", alt: "Lat pulldown" },
+        { id: "dbbench", name: "Dumbbell bench press", per: true, sets: 3, lo: 8, hi: 12, start: 6, inc: 1, rest: 90, cue: "Shoulder blades pinched into the bench, elbows ~45°.", alt: "Chest press machine" },
+        { id: "onearmrow", name: "One-arm dumbbell row", sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 75, cue: "Hand on the bench, flat back. Pull toward your hip.", alt: "Seated cable row" },
+        { id: "pushup", name: "Push-up — ladder level", unit: "level", sets: 2, lo: 6, hi: 12, rest: 90, cue: "Second practice of the week. Quality reps only.", alt: "One level easier" },
+        { id: "curl", name: "Dumbbell biceps curl", per: true, sets: 3, lo: 10, hi: 12, start: 5, inc: 1, rest: 60, cue: "Elbows pinned, 2 s down.", alt: "Cable curl" },
+        { id: "pushdown", name: "Triceps rope pushdown", sets: 3, lo: 10, hi: 15, start: 10, inc: 2.5, rest: 60, cue: "Elbows by your sides, spread the rope at the bottom.", alt: "Overhead dumbbell triceps extension" },
+        { id: "lateral", name: "Lateral raise", per: true, sets: 3, lo: 12, hi: 15, start: 2, inc: 1, rest: 60, cue: "Lead with the elbows, stop at shoulder height.", alt: "Cable lateral raise" },
+        { id: "suitcase", name: "Suitcase carry 20 m/side + bear crawl 10 m", unit: "carry", sets: 2, lo: 1, hi: 1, start: 10, inc: 2, rest: 60, cue: "One heavy dumbbell, don't lean. Practical core finisher.", alt: "Farmer carry" }
+      ] }
+  },
+  gentle: { name: "Gentle day", items: ["20–30 min easy walk, outside if possible", "Daily 10 at home", "Optional: 10 min yoga flow or a warm bath"] },
+
+  ladder: ["Wall push-up", "Kitchen-counter push-up (~90 cm)", "Bench / table push-up (~50 cm)", "Low step push-up (~30 cm)",
+           "Floor negatives — lower in 4 s, knees down to come up", "1–3 full push-ups + negatives", "3 × 5 full push-ups"],
+
+  targets: [["Lat pulldown", "35 kg", "40–42.5 kg"], ["Seated cable row", "20 kg", "25 kg"], ["Leg press", "60 kg", "75–80 kg"],
+            ["Bulgarian split squat", "7 kg", "9–10 kg"], ["Biceps curl", "5 kg", "6–7 kg"], ["Push-ups", "—", "first full push-up"]],
+
+  protein: [["Magerquark 250 g", 30], ["Skyr 150 g", 16], ["Hüttenkäse 200 g", 24], ["2 eggs", 13], ["Tofu 200 g", 28],
+            ["Chicken breast 150 g", 34], ["Lentils 200 g cooked", 18], ["Protein shake", 24], ["+5 g", 5]],
+
+  /* Habit log. limit = per week (0 = aim for none). */
+  habits: [
+    { id: "smoke", name: "Smoking", unit: "cigarettes", limit: 0, on: true },
+    { id: "sugar", name: "Sugar", unit: "sweet treats", limit: 5, on: true },
+    { id: "alcohol", name: "Alcohol", unit: "drinks", limit: 3, on: true }
+  ],
+  triggers: ["Stressed", "Bored", "Tired", "With people", "Hungry", "After a meal", "Low mood", "Pre-period", "Autopilot", "Celebrating"],
+
+  moods: ["Drained", "Low", "Okay", "Good", "Bright"],
+  symptoms: ["Cramps", "Headache", "Bloating", "Low energy", "Cravings", "Restless", "Tender", "Clear-headed"],
+
+  /* Mottos — original lines. phase: optional cycle phase where it fits best. */
+  mottos: [
+    { t: "Slow is smooth. Smooth is fast." },
+    { t: "Do the next right thing, not the whole thing." },
+    { t: "Today I only have to show up for today." },
+    { t: "Make it easy to start and hard to skip." },
+    { t: "Strong is built on boring days." },
+    { t: "Protect the morning, and the morning protects the day." },
+    { t: "I am allowed to do things imperfectly and still finish them." },
+    { t: "One application. One rep. One page. Then the next." },
+    { t: "Energy follows action more often than it leads it." },
+    { t: "Be the person who keeps small promises to herself." },
+    { t: "Less scrolling, more living." },
+    { t: "Choose the hard thing that makes the rest easier." },
+    { t: "My pace is still progress." },
+    { t: "Finish before you polish." },
+    { t: "Calm is a skill. Practise it once today." },
+    { t: "What would this look like if it were simple?" },
+    { t: "The plan is a tool, not a judge." },
+    { t: "Ask for what I want, clearly and kindly." },
+    { t: "Today counts even if nobody sees it." },
+    { t: "Spend attention like money." },
+    { t: "I don't need more motivation. I need the first two minutes." },
+    { t: "Good enough and sent beats perfect and drafted." },
+    { t: "Strength is gentle with itself and firm with its habits." },
+    { t: "I can do hard things on soft days.", phase: "late" },
+    { t: "Rest is part of the training.", phase: "rest" },
+    { t: "Today the only goal is to be kind to my body.", phase: "rest" },
+    { t: "Low battery, same direction.", phase: "rest" },
+    { t: "Steady, not heroic.", phase: "period" },
+    { t: "Lighter load, same habit.", phase: "period" },
+    { t: "Go a little heavier than yesterday.", phase: "follicular" },
+    { t: "Start the thing I've been postponing.", phase: "follicular" },
+    { t: "Say yes to one bold thing.", phase: "follicular" },
+    { t: "Reach out. People are happier to hear from me than I think.", phase: "ovulation" },
+    { t: "Let them see the real me.", phase: "ovulation" },
+    { t: "Finish, file, close loops.", phase: "luteal" },
+    { t: "Depth over speed.", phase: "luteal" },
+    { t: "Hold the line, lower the volume.", phase: "late" },
+    { t: "My feelings are weather, not climate.", phase: "late" }
+  ],
+
+  /* Encouragement — short, specific, not cheesy. */
+  cheers: [
+    "You did the thing you didn't feel like doing. That's the whole skill.",
+    "Small and repeated beats big and rare.",
+    "Nobody saw this one. You'll see it in March.",
+    "That's evidence, not hope.",
+    "You kept a promise to yourself. Those count double.",
+    "The hardest part was starting, and it's already behind you.",
+    "A boring win is still a win.",
+    "You didn't need to feel ready. You needed to begin.",
+    "Your future self just exhaled.",
+    "This is what consistency looks like up close: unremarkable and powerful.",
+    "Every finished task makes the next one cheaper to start.",
+    "You're not catching up. You're building.",
+    "Quietly done. Well done.",
+    "The person who does this every day — that's you now.",
+    "You trusted the plan over the mood. That's maturity, not discipline.",
+    "One more brick. The wall doesn't care how you felt laying it."
+  ],
+
+  /* Insights — non-obvious, evidence-based. src = where it comes from. */
+  insights: [
+    // training
+    { id: "t1", c: "train", t: "Weight matters less than effort", b: "Loads anywhere from ~30 % to 80 %+ of your max build similar muscle when sets end close to failure. Your 5 kg dumbbells aren't “too light” if the last reps are genuinely hard.", src: "Schoenfeld et al., 2017 meta-analysis" },
+    { id: "t2", c: "train", t: "There's no single best glute exercise", b: "In a 9-week study, hip thrusts and squats produced similar glute growth. The best glute exercise is the one you can progress for months without pain.", src: "Plotkin et al., 2023" },
+    { id: "t3", c: "train", t: "The stretched part grows you", b: "Muscles seem to grow more when loaded at long lengths — the bottom of an RDL or Bulgarian split squat. Cutting the range short to lift heavier usually trades growth for ego.", src: "Pedrosa et al., 2022; Maeo et al., 2021" },
+    { id: "t4", c: "train", t: "Early strength is mostly your brain", b: "Most strength gained in the first 6–8 weeks comes from your nervous system learning to recruit muscle, not from bigger muscle. That's why weights jump fast now and slow later — the slowdown isn't failure.", src: "Moritani & deVries, 1979; Sale, 1988" },
+    { id: "t5", c: "train", t: "Bracing isn't sucking in", b: "Pulling your belly button in (hollowing) gives less spine stability than bracing — stiffening all around your waist as if someone's about to poke you. That's the “using your core” you're after.", src: "McGill, spine biomechanics research" },
+    { id: "t6", c: "train", t: "Hips fix knees", b: "For kneecap pain, strengthening the hips (abductors, glutes) works as well as or better than knee-only exercise. Your abduction machine is knee rehab.", src: "Lack et al., 2015 systematic review" },
+    { id: "t7", c: "train", t: "Soreness is a bad scorekeeper", b: "Muscle soreness mainly signals novelty, not a productive workout. As you adapt, you'll get less sore while still growing.", src: "Schoenfeld & Contreras, 2013" },
+    { id: "t8", c: "train", t: "Longer rests, more growth", b: "With the same number of sets, resting 2–3 minutes between heavy sets built more muscle than resting 1 minute. Rest on big lifts is training, not laziness.", src: "Schoenfeld et al., 2016" },
+    { id: "t9", c: "train", t: "Women fatigue more slowly", b: "At the same relative intensity, women often recover between sets faster and fatigue less than men. Programs written for men can underdose you.", src: "Hunter, 2014" },
+    { id: "t10", c: "train", t: "Grip predicts lifespan", b: "Grip strength predicted death from any cause better than blood pressure in a study of 140,000 people in 17 countries. Farmer carries are longevity training.", src: "Leong et al., 2015, The Lancet" },
+    { id: "t11", c: "train", t: "You can't spot-reduce fat", b: "Where you lose fat first is largely genetic. What you can shape is the muscle underneath — that's what makes an area look “tight”.", src: "Vispute et al., 2011" },
+    { id: "t12", c: "train", t: "Muscle remembers", b: "Muscle cells gain extra nuclei when they grow, and in animal studies those nuclei stay for a long time after detraining. Regaining muscle after a break is faster than building it the first time.", src: "Bruusgaard et al., 2010" },
+    { id: "t13", c: "train", t: "Cardio after lifting is fine", b: "The “interference” of cardio with muscle growth is small, especially with cycling or walking rather than running. Your 20 minutes after lifting costs almost nothing.", src: "Wilson et al., 2012 meta-analysis" },
+    { id: "t14", c: "train", t: "Exercise beats rest for back pain", b: "For long-lasting lower back pain, exercise therapy reduces pain more than usual care — and the specific type of exercise matters less than doing it consistently.", src: "Hayden et al., 2021 Cochrane review" },
+    { id: "t15", c: "train", t: "The window is wide", b: "The 30-minute “anabolic window” is mostly a myth. Total daily protein matters most; a protein meal within a couple of hours of training is plenty.", src: "Aragon & Schoenfeld, 2013" },
+    { id: "t16", c: "train", t: "Steps have a sweet spot", b: "For adults under 60, the drop in mortality risk levels off at around 8,000–10,000 steps a day. More is fine, but most of the benefit comes before that.", src: "Paluch et al., 2022, Lancet Public Health" },
+    { id: "t17", c: "train", t: "Period pain responds to exercise", b: "Regular exercise reduced period pain intensity by a clinically meaningful amount, roughly 25 points on a 100-point scale.", src: "Armour et al., 2019 Cochrane review" },
+    // sleep
+    { id: "s1", c: "sleep", t: "Short sleep eats muscle, not fat", b: "Dieters sleeping 5.5 h instead of 8.5 h lost the same weight — but 55 % less of it was fat. Sleep decides what kind of weight you lose.", src: "Nedeltcheva et al., 2010" },
+    { id: "s2", c: "sleep", t: "One bad night changes your blood sugar", b: "A single night of ~4 hours' sleep measurably reduced insulin sensitivity in healthy people the next day. Cravings after poor sleep are partly chemistry.", src: "Donga et al., 2010" },
+    { id: "s3", c: "sleep", t: "Wake time is the anchor", b: "A consistent wake-up time plus morning daylight sets your body clock more strongly than trying to fall asleep earlier. Get the morning right and the evening follows.", src: "Circadian research, e.g. Roenneberg" },
+    { id: "s4", c: "sleep", t: "Coffee lingers", b: "Caffeine's half-life is about 5 hours (2–10 depending on the person). Half of a 16:00 coffee is still active at 21:00.", src: "Pharmacology reviews" },
+    { id: "s5", c: "sleep", t: "Weekend shifts are mini jet lag", b: "Sleeping on a very different schedule at the weekend (“social jet lag”) is linked with worse metabolic health — even when total sleep is the same.", src: "Roenneberg et al., 2012" },
+    { id: "s6", c: "sleep", t: "Alcohol borrows sleep", b: "Alcohol helps you fall asleep, then suppresses REM sleep and fragments the second half of the night. You sleep longer and recover less.", src: "Ebrahim et al., 2013 review" },
+    // nutrition
+    { id: "n1", c: "food", t: "Protein burns while you digest it", b: "About 20–30 % of protein's calories are used just to digest it, compared with 0–3 % for fat. It's also the most filling macronutrient.", src: "Westerterp, 2004" },
+    { id: "n2", c: "food", t: "Ultra-processed food overrides fullness", b: "On an ultra-processed diet, people ate ~500 kcal more per day than on an unprocessed one — with the same calories, sugar, fat and fibre on offer.", src: "Hall et al., 2019, NIH" },
+    { id: "n3", c: "food", t: "Fermented beats fibre — for diversity", b: "Over 10 weeks, eating fermented foods (yogurt, kefir, kimchi, sauerkraut) increased gut microbiome diversity and lowered inflammation markers. A high-fibre diet alone didn't.", src: "Wastyk et al., 2021, Cell" },
+    { id: "n4", c: "food", t: "Bremen's sun is off in winter", b: "At 53° north, from roughly October to March the sun is too low for your skin to make meaningful vitamin D. Winter supplementation isn't a fad here.", src: "Webb et al., 1988; latitude research" },
+    { id: "n5", c: "food", t: "Iron is the quiet one", b: "Iron deficiency is the most common nutrient deficiency worldwide and hits menstruating women hardest. Tiredness that doesn't match your sleep is worth a ferritin test.", src: "WHO" },
+    { id: "n6", c: "food", t: "Tea blocks iron, vitamin C helps", b: "Plant iron (lentils, tofu) absorbs much better with vitamin C (peppers, citrus) and much worse with tea or coffee in the same meal. Move the coffee an hour away.", src: "Hallberg & Hulthén, 2000" },
+    { id: "n7", c: "food", t: "Mild dehydration hits mood first", b: "Losing just 1–2 % of body water lowered mood and concentration in young women — before they felt thirsty.", src: "Armstrong et al., 2012" },
+    { id: "n8", c: "food", t: "Fullness is 20 minutes late", b: "Satiety hormones like PYY and GLP-1 take around 20 minutes to rise after you start eating. Eating slowly lets the signal arrive before the second plate.", src: "Kokkinos et al., 2010" },
+    { id: "n9", c: "food", t: "Luteal cravings are physiological", b: "Energy use rises slightly after ovulation and appetite often follows. Cravings before your period aren't a willpower failure — plan protein-rich snacks for them.", src: "Benton et al., 2020 review" },
+    // mind
+    { id: "m1", c: "mind", t: "Habits take ~66 days — and missing one is fine", b: "Forming a habit took 66 days on average (range 18–254). Missing a single day had no measurable effect on the process. Never miss twice.", src: "Lally et al., 2010" },
+    { id: "m2", c: "mind", t: "If-then plans double follow-through", b: "Plans written as “If it's 08:15, then I open the job list” had a medium-to-large effect on actually doing things, across 94 studies.", src: "Gollwitzer & Sheeran, 2006" },
+    { id: "m3", c: "mind", t: "Willpower isn't a fuel tank", b: "The idea that self-control runs out like fuel (“ego depletion”) largely failed a 23-lab replication. What reliably works is designing situations so you need less willpower.", src: "Hagger et al., 2016" },
+    { id: "m4", c: "mind", t: "Disciplined people resist less", b: "People high in self-control report fewer temptations, not more resisting. They arrange their lives so temptations rarely show up.", src: "Hofmann et al., 2012" },
+    { id: "m5", c: "mind", t: "Writing a plan quiets the noise", b: "Unfinished tasks keep popping into your head — but simply writing a specific plan for them stopped the intrusions, even without doing the task.", src: "Masicampo & Baumeister, 2011" },
+    { id: "m6", c: "mind", t: "Naming a feeling shrinks it", b: "Putting a feeling into words (“I feel anxious”) reduced activity in the amygdala, the brain's alarm centre. Your journal is doing neuroscience.", src: "Lieberman et al., 2007" },
+    { id: "m7", c: "mind", t: "Progress is the best motivator", b: "Across 12,000 diary entries, the days people felt most motivated were days they made progress on meaningful work — even small progress.", src: "Amabile & Kramer, 2011" },
+    { id: "m8", c: "mind", t: "Self-compassion beats self-criticism", b: "People who treated a failure with self-compassion studied longer and were more motivated to improve than those who were hard on themselves.", src: "Breines & Chen, 2012" },
+    { id: "m9", c: "mind", t: "Fresh starts are real", b: "People are measurably more likely to start goals at temporal landmarks — Mondays, the first of the month, birthdays. Use them on purpose.", src: "Dai, Milkman & Riis, 2014" },
+    { id: "m10", c: "mind", t: "Bundle the want with the should", b: "People who could only listen to a gripping audiobook at the gym went to the gym significantly more often. Pair something you crave with something you avoid.", src: "Milkman et al., 2014" },
+    { id: "m11", c: "mind", t: "You'll underestimate this task", b: "People underestimate how long tasks take even when they know similar tasks overran before. Add 50 % to every estimate and your day stops feeling like failure.", src: "Buehler et al., 1994" },
+    { id: "m12", c: "mind", t: "Switching leaves residue", b: "After switching tasks, part of your attention stays stuck on the previous one and performance drops. Finish or write down where you stopped before switching.", src: "Leroy, 2009" },
+    { id: "m13", c: "mind", t: "Endings define memories", b: "We remember experiences mostly by their peak and their end. Finish a workout or a hard day with something good, and future-you will want to repeat it.", src: "Kahneman et al., 1993" },
+    { id: "m14", c: "mind", t: "Writing about stress is medicine", b: "Writing about difficult experiences for 15–20 minutes on a few days improved later health and well-being in many studies.", src: "Pennebaker, 1997" },
+    { id: "m15", c: "mind", t: "Gratitude works best when sent", b: "Writing and delivering a gratitude letter boosted happiness for up to a month — far longer than most exercises tested.", src: "Seligman et al., 2005" },
+    { id: "m16", c: "mind", t: "Variety slows adaptation", b: "We adapt to repeated pleasures. Varying how you do nice things (new route, new recipe) keeps them nice for longer.", src: "Lyubomirsky, Sheldon & Schkade" },
+    { id: "m17", c: "mind", t: "Awe makes you bigger by making you smaller", b: "Brief experiences of awe — tall trees, live music, a huge sky — made people more generous and less self-focused.", src: "Piff et al., 2015" },
+    { id: "m18", c: "mind", t: "Motivation follows movement", b: "In behavioural activation therapy, doing a planned activity before feeling like it reliably improves mood. Waiting to feel like it is usually backwards.", src: "Ekers et al., 2014 meta-analysis" },
+    // career
+    { id: "c1", c: "career", t: "Weak ties get people hired", b: "In a LinkedIn experiment with 20 million users, moderately weak ties — people you know a bit, not close friends — were the most useful for getting a new job.", src: "Rajkumar et al., 2022, Science" },
+    { id: "c2", c: "career", t: "Your CV gets ~7 seconds", b: "Eye-tracking showed recruiters' first scan of a CV averages about 7 seconds. The top third of page one does most of the work.", src: "Ladders, 2018" },
+    { id: "c3", c: "career", t: "Women apply less and win more", b: "LinkedIn data showed women applied to about 20 % fewer jobs than men but were about 16 % more likely to be hired once they applied. Apply when you meet most — not all — requirements.", src: "LinkedIn Gender Insights, 2019" },
+    { id: "c4", c: "career", t: "Interviews reward prepared stories", b: "Structured interviews predict job performance much better than casual ones, so most good employers use them. Five well-prepared STAR stories cover most questions.", src: "Schmidt & Hunter, 1998" },
+    { id: "c5", c: "career", t: "The first number anchors", b: "In negotiations, whoever makes the first offer pulls the final result toward it. If you know your market value, name it first.", src: "Galinsky & Mussweiler, 2001" },
+    { id: "c6", c: "career", t: "Small flaws make you likeable", b: "Competent people who made a small blunder became more likeable, not less. You don't need a flawless interview.", src: "Aronson et al., 1966" },
+    { id: "c7", c: "career", t: "Diagnose the funnel", b: "Few responses → the CV or targeting is the problem. Interviews but no offers → interview skills. Tracking applications tells you which one to fix.", src: "Job-search practice" },
+    { id: "c8", c: "career", t: "Judge days by inputs", b: "Job-search research links progress to effort and self-regulation you control, not to single outcomes you don't. An application sent is a good day, whatever the reply.", src: "Kanfer et al., 2001 meta-analysis" },
+    // social
+    { id: "r1", c: "social", t: "Relationships predict health at 80", b: "In the 80-year Harvard Study, satisfaction with relationships at 50 predicted health at 80 better than cholesterol levels did.", src: "Waldinger & Schulz, Harvard Study of Adult Development" },
+    { id: "r2", c: "social", t: "They liked you more than you think", b: "After conversations, people consistently underestimated how much the other person liked them — the “liking gap”.", src: "Boothby et al., 2018" },
+    { id: "r3", c: "social", t: "Reaching out lands better than you predict", b: "People underestimated how much a short unexpected message was appreciated — and the less in touch they'd been, the bigger the gap.", src: "Liu et al., 2022" },
+    { id: "r4", c: "social", t: "A parent's voice works like a hug", b: "After a stressful task, girls who spoke to their mothers by phone had stress-hormone drops similar to those who got a hug. Texting didn't do it.", src: "Seltzer et al., 2010 & 2012" },
+    { id: "r5", c: "social", t: "Friendship takes hours, literally", b: "It takes roughly 50 hours together to go from acquaintance to casual friend and around 200 for a close friend. Plan the hours.", src: "Hall, 2018" },
+    { id: "r6", c: "social", t: "How you celebrate matters most", b: "How people respond to a partner's good news predicts relationship quality more than how they handle bad news. Ask a follow-up question when someone shares a win.", src: "Gable et al., 2004" },
+    { id: "r7", c: "social", t: "Strangers make the commute happier", b: "Commuters told to talk to a stranger had a more pleasant ride, even though they predicted the opposite.", src: "Epley & Schroeder, 2014" },
+    { id: "r8", c: "social", t: "Moving in sync builds trust", b: "Doing things in sync — walking, singing, dancing together — increased cooperation and closeness afterwards.", src: "Wiltermuth & Heath, 2009" },
+    { id: "r9", c: "social", t: "Doing beats talking for closeness", b: "Family and couple research finds that doing activities together — not just talking — predicts feeling close. A game with your sister is relationship maintenance, not wasted time.", src: "Shared-leisure research, e.g. Orthner, 1975" },
+    // home
+    { id: "h1", c: "home", t: "Clutter shows up in cortisol", b: "Women who described their homes as cluttered had flatter daily cortisol patterns, a marker linked with chronic stress.", src: "Saxbe & Repetti, 2010" },
+    { id: "h2", c: "home", t: "Clutter competes for attention", b: "Multiple visible objects compete for your visual cortex's attention and reduce focus. A clear desk is a cognitive tool.", src: "McMains & Kastner, 2011" },
+    { id: "h3", c: "home", t: "Mindful chores calm the mind", b: "Washing dishes while paying attention to the water and the movements reduced nervousness and increased “mental inspiration”.", src: "Hanley et al., 2015" },
+    // reading
+    { id: "l1", c: "read", t: "Testing beats re-reading", b: "Recalling what you read without looking (retrieval practice) produced much better long-term memory than reading it again.", src: "Roediger & Karpicke, 2006" },
+    { id: "l2", c: "read", t: "Spacing makes it stick", b: "The same study time spread over several days beats one long session for remembering it weeks later.", src: "Cepeda et al., 2006 meta-analysis" },
+    { id: "l3", c: "read", t: "Paper still wins for facts", b: "For informational texts, people understand slightly more from paper than from screens — especially under time pressure.", src: "Delgado et al., 2018 meta-analysis" },
+    { id: "l4", c: "read", t: "Fiction trains empathy over time", b: "Lifetime exposure to fiction is linked to better understanding of others' minds. Single short reading sessions show less reliable effects.", src: "Mar, 2018 review" },
+    // habits
+    { id: "hb1", c: "habit", t: "Urges are waves", b: "A craving rises, peaks and fades if you don't act on it. Smokers taught to “surf” urges with curious attention instead of fighting them smoked fewer cigarettes over the following week.", src: "Bowen & Marlatt, 2009" },
+    { id: "hb2", c: "habit", t: "Cigarettes create the stress they relieve", b: "Smoking feels calming because it ends the withdrawal the last cigarette started. Across 26 studies, people who quit ended up with lower anxiety, depression and stress than people who kept smoking.", src: "Taylor et al., 2014, BMJ" },
+    { id: "hb3", c: "habit", t: "Even one drink shows up in your recovery", b: "In data from 4,000 people, low alcohol intake reduced overnight heart-rate-variability recovery by about 9 %; high intake by about 39 %. Your body is still busy at 3 a.m.", src: "Pietilä et al., 2018" },
+    { id: "hb4", c: "habit", t: "Evening sugar starts at breakfast", b: "A high-protein breakfast reduced evening snacking on high-fat and high-sugar foods in a controlled study. Fight the 21:00 craving at 07:30.", src: "Leidy et al., 2013" },
+    { id: "hb5", c: "habit", t: "Tracking is already treatment", b: "Simply recording a behaviour tends to shift it in the direction you want — psychologists call it reactivity. This log works even on days you change nothing else.", src: "Korotitsch & Nelson-Gray, 1999" },
+    { id: "hb6", c: "habit", t: "Change the cue, not your willpower", b: "Most habits are triggered by context: a place, a time, certain people, a mood. Changing the cue — which route, what's in the cupboard, who you sit with — beats resisting it every single time.", src: "Wood & Rünger, 2016" },
+    { id: "hb7", c: "habit", t: "One slip isn't a ruined day", b: "After a single slip people often think “day's ruined anyway” and overdo it — the abstinence violation effect. Treating a slip as data protects the rest of the day.", src: "Marlatt & Gordon, 1985" },
+    { id: "hb8", c: "habit", t: "Short sleep orders snacks", b: "After short nights people ate on average ~385 kcal more the next day, mostly from snacks. Some sugar cravings are really sleep debt.", src: "Al Khatib et al., 2017 meta-analysis" },
+    // cycle
+    { id: "y1", c: "cycle", t: "Cycle effects are smaller than Instagram says", b: "A meta-analysis found performance may be only trivially lower in the early part of the cycle, with large individual differences. Your own data beats generic rules.", src: "McNulty et al., 2020" },
+    { id: "y2", c: "cycle", t: "Your temperature reveals ovulation", b: "After ovulation, progesterone raises resting body temperature by about 0.3–0.5 °C and resting heart rate often rises too.", src: "Endocrinology basics" }
+  ],
+
+  /* which insight categories fit which completed task tag */
+  insightMap: {
+    gym: ["train", "food", "sleep"], tennis: ["train", "social"], stretch: ["train", "sleep"], morning: ["sleep", "food", "mind"],
+    wind: ["sleep", "mind"], job: ["career", "mind"], mit: ["mind", "career"], read: ["read", "mind"], review: ["mind"],
+    habit: ["habit"], commute: ["mind", "read"], clean: ["home", "mind"], groceries: ["food"], mealprep: ["food"], premeal: ["food"], journal: ["mind"],
+    social: ["social"], mom: ["social"], sis: ["social"], body: ["sleep", "train", "food"], todo: ["mind", "career"], any: ["mind", "social", "food"]
+  },
+
+  achievements: [
+    ["first-gym", "First rep", "Log your first gym session"],
+    ["gym-week", "Full week", "4 gym sessions in one week"],
+    ["stretch7", "Bendy", "7-day Daily 10 streak"],
+    ["stretch30", "Iron spine", "30-day Daily 10 streak"],
+    ["job10", "Hustler", "10 job-hunt quests"],
+    ["job30", "Relentless", "30 job-hunt quests"],
+    ["mom4", "Good daughter", "Call Mom in 4 different weeks"],
+    ["water7", "Hydrated", "Reach your water goal on 7 days"],
+    ["sleep7", "Dream team", "7 nights of 7.5 h+"],
+    ["protein7", "Built different", "Hit your protein goal on 7 days"],
+    ["pushup", "First push-up", "Reach push-up ladder level 6"],
+    ["legpress80", "Leg day legend", "Leg press 80 kg"],
+    ["journal14", "Reflective", "14 journal entries"],
+    ["insights30", "Curious mind", "Collect 30 insights"],
+    ["resist10", "Urge surfer", "Resist 10 urges"],
+    ["clear7", "Clean week", "7 clear days in a row for a habit you're cutting"],
+    ["lvl10", "Bloom", "Reach level 10"]
+  ]
+};

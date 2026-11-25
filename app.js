@@ -34,6 +34,7 @@ function fresh() {
     routine: clone(C.routine), events: clone(C.events), activities: clone(C.activities), todos: [],
     logs: {}, gym: {}, last: {}, ladder: 1, periods: [], cycleLen: 28, periodLen: 5, apps: [],
     seen: {}, ach: {}, sent: {}, lowOff: {}, draft: null, rv: C.routineVersion, med: { sessions: [], course: 0, voice: false, last: '' },
+    ovr: {}, freezes: 0, frozen: [], freezeMark: 0, lastLevel: 1, bossDone: {}, look: { theme: 'sage', flower: 'rose' },
     habits: C.habits.map(h => Object.assign({ created: TODAY }, h)) };
 }
 let S;
@@ -55,8 +56,10 @@ if (RV0 < C.routineVersion) {
 }
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 let saveT = null;
+let pendingLevel = 0;
 function save() {
   S.updated = Date.now();
+  gameTick();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
   checkAch();
   clearTimeout(saveT); saveT = setTimeout(syncReminders, 4000);
@@ -104,6 +107,7 @@ function itemsFor(d) {
     let it = { key: 'r:' + r.id, src: 'routine', ref: r, title: r.title, cat: r.cat, start: r.start, end: r.end, xp: r.xp || 0, tag: r.tag,
       kind: r.kind || 'quest', note: r.note, session: r.session, remind: r.remind, travel: r.travel || 0 };
     if (r.kind === 'gym') it.kind = 'quest';
+    const ov = (S.ovr[d] || {})[it.key]; if (ov) { it.start = ov.start; it.end = ov.end; it.moved = true; }
     if (low) it = lowAdjust(it);
     out.push(it);
   }
@@ -190,16 +194,59 @@ function dayXP(d) {
   if (L.energy) x += 5;
   if (L.j && (L.j.win || L.j.note || L.j.mood)) x += 20;
   x += Math.min(medMinutes(d), 20);
+  if (L.side) x += 25;
+  if (isPerfect(d)) x += 50;
   return x;
 }
-const totalXP = () => Object.keys(S.logs).reduce((a, d) => a + dayXP(d), 0);
+const totalXP = () => Object.keys(S.logs).reduce((a, d) => a + dayXP(d), 0) + Object.keys(S.bossDone || {}).length * 100;
+function isPerfect(d) {
+  if (d > TODAY || !S.logs[d]) return false;
+  const q = itemsFor(d).filter(i => i.kind === 'quest');
+  return q.length > 0 && q.every(i => S.logs[d].q[i.key]);
+}
+/* ---------- game layer ---------- */
+const hashD = s => { let h = 7; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+const bossOf = ws => C.bosses[Math.floor(diffDays('2026-11-23', ws) / 7 + 800) % C.bosses.length];
+function bossDamage(ws) { let x = 0; for (let i = 0; i < 7; i++) x += dayXP(addDays(ws, i)); return x; }
+function sideOf(d) { const L = peek(d); return L.sideIdx != null ? L.sideIdx : hashD(d) % C.sideQuests.length; }
+const phraseOf = d => { const g = C.insights.filter(i => i.c === 'german'); return g[hashD(d + 'de') % g.length]; };
+function unlocked(o) { return o.boss ? Object.keys(S.bossDone || {}).length >= o.boss : levelOf(totalXP()) >= (o.level || 1); }
+function applyLook() {
+  const t = C.themes.find(x => x.id === S.look.theme) || C.themes[0], f = C.flowers.find(x => x.id === S.look.flower) || C.flowers[0];
+  const r = document.documentElement.style;
+  r.setProperty('--acc', `light-dark(${t.light}, ${t.dark})`); r.setProperty('--petal', f.petal); r.setProperty('--pollen', f.pollen);
+}
+function gameTick() {
+  const ws = weekStart(TODAY);
+  if (!S.bossDone[ws] && bossDamage(ws) >= C.bossHP) { S.bossDone[ws] = TODAY; toast(bossOf(ws) + ' defeated · +100 XP'); }
+  const s = streak();
+  if (s < S.freezeMark) S.freezeMark = Math.floor(s / 7) * 7;
+  if (s >= S.freezeMark + 7) { S.freezeMark += 7; if (S.freezes < 3) { S.freezes++; toast('Streak freeze earned — protects one missed day'); } }
+  const L = levelOf(totalXP());
+  if (L > (S.lastLevel || 1)) { S.lastLevel = L; pendingLevel = L; setTimeout(maybeLevel, 900); }
+}
+function runDaily() {
+  const y = addDays(TODAY, -1), d2 = addDays(TODAY, -2);
+  if (S.freezes > 0 && !peek(y).q['r:stretch'] && !isLow(y) && !S.frozen.includes(y) && (peek(d2).q['r:stretch'] || S.frozen.includes(d2))) {
+    S.frozen.push(y); S.freezes--; save(); setTimeout(() => toast('Streak freeze used for yesterday — your streak is safe'), 1200);
+  }
+}
+function maybeLevel() {
+  if (!pendingLevel) return;
+  if ($('#sheet').classList.contains('on') || $('#gm').classList.contains('on') || $('#md').classList.contains('on')) return;
+  const L = pendingLevel; pendingLevel = 0;
+  const news = [...C.themes.filter(t => t.level === L).map(t => t.name + ' colour theme'), ...C.flowers.filter(f => f.level === L).map(f => f.name + ' flowers')];
+  openSheet(`<div class="levelup"><div class="plant">${plant(L, 200)}</div><p class="xpbig">Level ${L}</p><h2>Your garden grew.</h2>
+    ${news.length ? `<p class="lead">Unlocked: <b>${esc(news.join(', '))}</b>. Switch it on in Garden → Settings → Look.</p>` : `<p class="lead">${esc(C.cheers[L % C.cheers.length])}</p>`}
+    <button class="btn primary wide" data-act="closeSheet">Keep going</button></div>`);
+}
 const levelOf = xp => { let L = 1; while (xp >= 50 * (L + 1) * L) L++; return L; };
 const need = L => 50 * L * (L - 1);
 const countTag = tag => Object.values(S.logs).reduce((n, l) => n + Object.values(l.q).filter(q => q.tag === tag).length, 0);
 function streak() {
   let n = 0, d = TODAY, i = 0;
   if (!peek(d).q['r:stretch']) d = addDays(d, -1);
-  while (i++ < 500) { if (peek(d).q['r:stretch']) n++; else if (!isLow(d)) break; d = addDays(d, -1); }
+  while (i++ < 500) { if (peek(d).q['r:stretch']) n++; else if (!isLow(d) && !(S.frozen || []).includes(d)) break; d = addDays(d, -1); }
   return n;
 }
 function bestStreak() {
@@ -223,6 +270,9 @@ const ACHK = {
   'resist10': () => Object.values(S.logs).reduce((n, l) => n + Object.values(l.h || {}).reduce((m, h) => m + (h.r || 0), 0), 0) >= 10,
   'clear7': () => S.habits.some(h => h.on && clearStreak(h) >= 7),
   'med10': () => S.med.sessions.length >= 10,
+  'boss1': () => Object.keys(S.bossDone || {}).length >= 1,
+  'perfect': () => Object.keys(S.logs).some(isPerfect),
+  'side10': () => Object.values(S.logs).filter(l => l.side).length >= 10,
   'med300': () => S.med.sessions.reduce((n, s) => n + s.mins, 0) >= 300,
   'course': () => S.med.course >= C.course.length,
   'legpress80': () => ((S.last.legpress || {}).w || 0) >= 80,
@@ -256,17 +306,17 @@ function pickInsight(tag) {
 function reward(item, xp) {
   const big = xp >= 20;
   const cheer = C.cheers[Math.floor(Math.random() * C.cheers.length)];
-  if (!big) { toast('+' + xp + ' XP · ' + cheer); return; }
+  if (!big) { toast('+' + xp + ' XP' + (item.ontime ? ' (on time)' : '') + ' · ' + cheer); return; }
   const ins = Math.random() < 0.72 ? pickInsight(item.tag) : null;
   const job = item.tag === 'job';
-  openSheet(`<div class="reward"><p class="xpbig">+${xp} XP</p>
+  openSheet(`<div class="reward"><p class="xpbig">+${xp} XP${item.ontime ? ' · on time +5' : ''}</p>
     ${ins ? `<p class="eyebrow">${esc(catLabel(ins.c))}</p><h2>${esc(ins.t)}</h2><p class="lead">${esc(ins.b)}</p><p class="src">${esc(ins.src)}</p>`
           : `<h2 class="cheer">${esc(cheer)}</h2>`}
     ${job ? `<div class="card soft"><p class="label">Log it (optional)</p><input id="appCo" placeholder="Organisation" autocomplete="off"><input id="appRole" placeholder="Role" autocomplete="off"></div>` : ''}
     <button class="btn primary wide" data-act="rewardDone">${job ? 'Save' : 'Nice'}</button></div>`);
   save();
 }
-const catLabel = c => ({ train: 'Training', sleep: 'Sleep', food: 'Food', mind: 'Mind', career: 'Career', social: 'People', home: 'Home', read: 'Learning', cycle: 'Cycle' }[c] || 'Insight');
+const catLabel = c => ({ german: 'Deutsch B2', calm: 'Calm', habit: 'Habits', train: 'Training', sleep: 'Sleep', food: 'Food', mind: 'Mind', career: 'Career', social: 'People', home: 'Home', read: 'Learning', cycle: 'Cycle' }[c] || 'Insight');
 
 function toggle(d, item) {
   const L = log(d);
@@ -275,9 +325,12 @@ function toggle(d, item) {
     if (item.src === 'todo') { item.ref.done = false; delete item.ref.doneAt; }
     save(); render(); return;
   }
-  L.q[item.key] = { xp: item.xp, cat: item.cat, tag: item.tag };
+  let xp = item.xp, ontime = false;
+  if (d === TODAY && xp > 0 && item.start) { const nm = nowMin(); if (nm >= toMin(item.start) - 15 && nm <= toMin(item.end) + 60) { xp += 5; ontime = true; } }
+  L.q[item.key] = { xp, cat: item.cat, tag: item.tag, ontime };
   if (item.src === 'todo') { item.ref.done = true; item.ref.doneAt = d; }
-  save(); render(); reward(item, item.xp);
+  save(); render(); reward(Object.assign({}, item, { ontime }), xp);
+  if (isPerfect(d) && !L.perfect) { L.perfect = 1; save(); setTimeout(() => toast('Perfect day — every quest done · +50 XP'), 600); }
 }
 
 /* ---------- plant ---------- */
@@ -316,7 +369,7 @@ function nextToast() {
   setTimeout(() => { el.classList.remove('on'); setTimeout(nextToast, 300); }, 2400);
 }
 function openSheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').classList.add('on'); $('#sheet').setAttribute('aria-hidden', 'false'); }
-function closeSheet() { $('#sheet').classList.remove('on'); $('#sheet').setAttribute('aria-hidden', 'true'); }
+function closeSheet() { $('#sheet').classList.remove('on'); $('#sheet').setAttribute('aria-hidden', 'true'); if (pendingLevel) setTimeout(maybeLevel, 350); }
 
 /* ---------- views ---------- */
 let VIEW = 'today', DAY = TODAY, PLAN_DAY = TODAY, PLAN_TAB = 'cal', JQ = '', PICK = null, MIND_TAB = 'med';
@@ -383,12 +436,14 @@ function viewToday() {
     <h1>${d === TODAY ? greet + ', ' + esc(S.settings.name.split(' ')[0]) : esc(fmtDay(d, { weekday: 'long' }))}</h1>
   </header>
   <button class="motto" data-act="motto" data-d="${d}"><span class="eyebrow">Motto of the day</span><span class="mtext">${esc(motto(d))}</span></button>
+  ${(() => { const p = phraseOf(d); return `<details class="card de"><summary><span class="eyebrow">Deutsch B2 · phrase of the day</span><b>${esc(p.t)}</b></summary><p>${esc(p.b)}</p></details>`; })()}
   ${ph ? `<div class="phase" style="--p:${ph.color}"><div><b>${esc(ph.name)}</b> · day ${c.cd}${c.predicted ? ' (predicted)' : ''}</div><p>${esc(ph.text)}</p>
       ${c.ph === 'rest' ? `<button class="link" data-act="lowoff" data-d="${d}">${S.lowOff[d] ? 'Switch rest mode back on' : 'I feel fine — plan normally'}</button>` : ''}</div>` : ''}
   ${!L.energy ? `<div class="card energy"><p class="label">How's your energy right now?</p><div class="seg5">${[1, 2, 3, 4, 5].map(n => `<button data-act="energy" data-d="${d}" data-n="${n}">${n}</button>`).join('')}</div><p class="hint">1 = empty · 5 = full</p></div>`
     : L.energy <= 2 && !low ? `<div class="card soft"><p><b>Low battery day.</b> Do the minimum version: Daily 10, one job step, water, early night. Everything else is a bonus.</p></div>` : ''}
   <div class="progress"><div class="bar"><i style="width:${items.length ? Math.round(done / items.length * 100) : 0}%"></i></div><span>${done}/${items.length} · ${dayXP(d)} XP</span></div>
   ${timeline(d)}
+  ${gameCards(d)}
   <h2 class="sec">Trackers</h2>
   <div class="trackers">
     <div class="card"><div class="row between"><p class="label">Water</p><p class="val">${(L.water * .25).toFixed(2).replace(/\.?0+$/, '')} / ${S.settings.water * .25} L</p></div>
@@ -410,6 +465,17 @@ function viewToday() {
   </div>
   ${evening ? `<button class="card cta" data-act="go" data-v="journal">Close the day → write your evening note</button>` : ''}
   ${installHint()}`;
+}
+function gameCards(d) {
+  const L = peek(d), ws = weekStart(d), dmg = bossDamage(ws), hp = C.bossHP, dead = !!S.bossDone[ws] || dmg >= hp;
+  const sq = C.sideQuests[sideOf(d)];
+  return `<h2 class="sec">Quests</h2>
+  <div class="card side${L.side ? ' done' : ''}"><div class="row between"><div class="grow"><p class="eyebrow">Side quest · +25 XP</p><p class="sq">${esc(sq)}</p></div>
+    <button class="check${L.side ? ' on' : ''}" data-act="side" data-d="${d}" aria-pressed="${!!L.side}" aria-label="Side quest done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
+    ${!L.side && !L.sideSwapped ? `<button class="link" data-act="sideSwap" data-d="${d}">Swap for another (once a day)</button>` : ''}</div>
+  <div class="card boss"><div class="row between"><div><p class="eyebrow">Weekly boss</p><b>${esc(bossOf(ws))}</b></div><span class="hint">${dead ? 'Defeated · +100 XP' : Math.max(0, hp - dmg) + ' HP left'}</span></div>
+    <div class="hp"><i style="width:${Math.max(0, 100 - dmg / hp * 100)}%"></i></div>
+    <p class="hint">${dead ? 'Beaten this week. A new boss arrives on Monday.' : 'Every XP you earn this week is damage. Defeat it by Sunday.'}${S.freezes ? ' · Streak freezes: ' + S.freezes : ''}</p></div>`;
 }
 function habitCard(d) {
   const hs = S.habits.filter(h => h.on); if (!hs.length) return '';
@@ -491,6 +557,7 @@ function suggestion(ex, mode) {
   else text = 'Same ' + w + ' kg · beat ' + last.reps.join('/');
   return { w, text, up };
 }
+const yt = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q.trim() + ' exercise how to');
 const setsFor = (ex, mode) => mode === 'deload' ? Math.min(2, ex.sets) : ex.sets;
 function viewGym() {
   const d = TODAY, plan = gymPlan(d), mode = gymMode(d), m = C.gymModes[mode];
@@ -511,7 +578,7 @@ function viewGym() {
   return `<header class="head"><h1>Gym</h1></header>
     ${top}
     <div class="seg">${Object.entries(C.sessions).map(([k, s]) => `<button class="${k === key ? 'on' : ''}" data-act="gymPick" data-s="${k}">${esc(s.name)}</button>`).join('')}</div>
-    <div class="card list">${ses.ex.map(ex => { const sg = suggestion(ex, mode); return `<div class="li"><div class="row between"><b>${esc(ex.name)}</b><span class="hint">${setsFor(ex, mode)} × ${ex.unit === 'carry' ? '1' : ex.lo + '–' + ex.hi}${ex.unit === 'sec' ? ' s' : ''}</span></div><span class="sug${sg.up ? ' up' : ''}">${esc(sg.text)}</span></div>`; }).join('')}
+    <div class="card list">${ses.ex.map(ex => { const sg = suggestion(ex, mode); return `<div class="li"><div class="row between"><b>${esc(ex.name)} <a class="link" href="${yt(ex.name)}" target="_blank" rel="noopener">Demo</a></b><span class="hint">${setsFor(ex, mode)} × ${ex.unit === 'carry' ? '1' : ex.lo + '–' + ex.hi}${ex.unit === 'sec' ? ' s' : ''}</span></div><span class="sug${sg.up ? ' up' : ''}">${esc(sg.text)}</span></div>`; }).join('')}
       <div class="li"><b>Cardio</b><p class="hint">${esc(ses.cardio)}</p></div></div>
     <h2 class="sec">Program</h2>
     <div class="card list">
@@ -547,7 +614,7 @@ function renderGym() {
   if (st === 'warm') {
     const w = C.warmups[ses.warm];
     body = `<p class="eyebrow">Step 1 · Physio warm-up · 20 min</p><h2>Switch your core and hips on</h2>
-      <div class="list">${w.map((x, i) => `<button class="row li tap${D.warm[i] ? ' done' : ''}" data-act="warm" data-i="${i}"><span class="check sm${D.warm[i] ? ' on' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>${esc(x)}</span></button>`).join('')}</div>
+      <div class="list">${w.map((x, i) => `<div class="row li${D.warm[i] ? ' done' : ''}"><button class="check sm${D.warm[i] ? ' on' : ''}" data-act="warm" data-i="${i}" aria-label="Done: ${esc(x)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><span class="grow">${esc(x)}</span><a class="link" href="${yt(x.replace(/[0-9×/s,].*$/, ''))}" target="_blank" rel="noopener">Demo</a></div>`).join('')}</div>
       <button class="btn primary wide big" data-act="gnext">Start lifting</button>`;
   } else if (st === 'cardio') {
     body = `<p class="eyebrow">Last step · Cardio · 20 min</p><h2>${esc(ses.cardio)}</h2>
@@ -561,6 +628,7 @@ function renderGym() {
     body = `<p class="eyebrow">Exercise ${D.step} of ${ses.ex.length}${mode === 'hold' ? ' · last set optional' : ''}</p>
       <h2>${esc(swapped ? ex.alt : ex.name)}</h2>
       <p class="cue">${esc(swapped ? 'Swap for pain or a busy machine. Same sets and reps.' : ex.cue)}</p>
+      <details class="how"><summary>How to do it</summary>${swapped ? '' : `<ol>${ex.how.map(h => `<li>${esc(h)}</li>`).join('')}</ol>`}<a class="link" href="${yt(swapped ? ex.alt : ex.name)}" target="_blank" rel="noopener">Watch a demo on YouTube ↗</a></details>
       <div class="row gap"><span class="sug${sg.up ? ' up' : ''}">${esc(sg.text)}</span><button class="link" data-act="swap" data-id="${ex.id}">${swapped ? 'Back to original' : 'Swap'}</button></div>
       <p class="setno">${allDone ? 'All sets done' : 'Set ' + (sets.length + 1) + ' of ' + n} · target ${u === 'carry' ? '1 carry' : ex.lo + '–' + ex.hi + (u === 'sec' ? ' s' : ' reps')}${ex.per ? ' · kg per hand' : ''}</p>
       ${u === 'level' ? `<div class="big-step"><button data-act="ladder" data-n="-1" aria-label="Easier level">−</button><div><b>L${S.ladder}</b><small>${esc(C.ladder[S.ladder - 1])}</small></div><button data-act="ladder" data-n="1" aria-label="Harder level">+</button></div>` : ''}
@@ -799,6 +867,11 @@ function viewGarden() {
     <div><p class="eyebrow">Level ${L}</p><h2>${esc(['Seedling', 'Sprout', 'Sprout', 'Young plant', 'Young plant', 'Budding', 'First bloom', 'Blooming', 'Blooming', 'Flourishing'][Math.min(L - 1, 9)] || 'Flourishing')}</h2>
       <div class="meter big"><i style="width:${Math.round((xp - a) / (b - a) * 100)}%"></i></div><p class="hint">${xp} XP · ${b - xp} to level ${L + 1}</p>
       <div class="stats3"><div><b>${streak()}</b><span>day Daily 10 streak</span></div><div><b>${wk}</b><span>XP this week</span></div><div><b>${countTag('job')}</b><span>job quests</span></div></div></div></div>
+  <h2 class="sec">Attributes</h2>
+  <div class="card attrs">${[['Strength', ['train']], ['Vitality', ['body']], ['Mind', ['mind']], ['Career', ['career']], ['Home', ['home']], ['Charisma', ['social']]].map(([n, cs]) => {
+    const v = Object.values(S.logs).reduce((s, l) => s + Object.values(l.q).filter(q => cs.includes(q.cat)).length, 0), lv = Math.floor(Math.sqrt(v / 2)) + 1, lo = 2 * (lv - 1) ** 2, hi = 2 * lv ** 2;
+    return `<div><span>${n}</span><b>Lv ${lv}</b><div class="meter"><i style="width:${(v - lo) / (hi - lo) * 100}%;background:${C.cats[cs[0]].color}"></i></div></div>`; }).join('')}</div>
+  <p class="hint pad">Bosses defeated: ${Object.keys(S.bossDone).length} · streak freezes: ${S.freezes}/3 (earn one every 7-day Daily 10 streak)</p>
   <h2 class="sec">Last 8 weeks</h2>
   <div class="card bars">${weeks.map(([w, x]) => `<div><span>${esc(fmtDay(w, { day: 'numeric', month: 'short' }))}</span><i style="width:${x / mx * 100}%"></i><b>${x}</b></div>`).join('')}</div>
   <h2 class="sec">Cycle</h2>
@@ -831,6 +904,7 @@ function eventForm(o) {
     <label class="label">Repeat</label><div class="seg mini">${['once', 'weekly'].map(r => `<label><input type="radio" name="rep" value="${r}"${(o.rep || 'once') === r ? ' checked' : ''}><span>${r === 'once' ? 'Once' : 'Every week'}</span></label>`).join('')}</div>
     ${dayChips(o.days || [wdOf(o.date)])}
     <label class="toggle"><input type="checkbox" name="quest"${o.xp !== 0 ? ' checked' : ''}><span>Counts as a quest (tick for XP)</span></label>
+    ${!o.id ? `<label class="toggle"><input type="checkbox" name="room"${o.room ? ' checked' : ''}><span>Make room: push later plans back</span></label>` : ''}
     <label class="label">Travel time (each way)</label><div class="seg mini">${[0, 15, 30, 45, 60].map(m => `<label><input type="radio" name="travel" value="${m}"${(o.travel || 0) === m ? ' checked' : ''}><span>${m ? m + ' m' : 'None'}</span></label>`).join('')}</div>
     <label class="toggle"><input type="checkbox" name="remind"${o.remind != null ? ' checked' : ''}><span>Remind me before (and before leaving)</span></label>
     <textarea name="note" rows="2" placeholder="Notes">${esc(o.note || '')}</textarea>
@@ -845,7 +919,12 @@ function sheetItem(d, k) {
   const r = i.ref, rt = i.src === 'routine';
   const gymLink = i.tag === 'gym' ? `<button class="btn wide" data-act="go" data-v="gym">Open gym session</button>` : '';
   const note = i.tag === 'stretch' ? C.home.join(' · ') + '. ' + C.homeMin : i.note || '';
-  openSheet(`<p class="eyebrow">${esc(fmtDay(d))} · ${i.start}–${i.end}</p><h2>${esc(i.title)}</h2>${note ? `<p class="lead">${esc(note)}</p>` : ''}${gymLink}
+  const hasOvr = Object.keys(S.ovr[d] || {}).length;
+  openSheet(`<p class="eyebrow">${esc(fmtDay(d))} · ${i.start}–${i.end}${i.moved ? ' · moved' : ''}</p><h2>${esc(i.title)}</h2>${note ? `<p class="lead">${esc(note)}</p>` : ''}${gymLink}
+    <div class="card"><p class="label">Move just this day</p><div class="row gap wrap">${[-30, -15, 15, 30].map(n => `<button class="btn small" data-act="mv" data-d="${d}" data-k="${esc(k)}" data-n="${n}">${n > 0 ? '+' : '−'}${Math.abs(n)} min</button>`).join('')}</div>
+      <p class="label">Push this and everything after it</p><div class="row gap wrap">${[15, 30, 60].map(n => `<button class="btn small" data-act="pushAfter" data-d="${d}" data-k="${esc(k)}" data-n="${n}">+${n} min</button>`).join('')}</div>
+      <p class="hint">Work shifts and your evening routine (from 21:30) stay where they are. Commutes move with your plans.</p>
+      <div class="row gap wrap"><button class="btn small soft" data-act="addAfter" data-d="${d}" data-k="${esc(k)}">+ Insert something after this</button>${hasOvr ? `<button class="link" data-act="resetDay" data-d="${d}">Reset this day's times</button>` : ''}</div></div>
     <details class="li"><summary>Edit</summary>${eventForm({ src: i.src, id: r.id, title: r.title, cat: r.cat, date: d, start: r.start, end: r.end, rep: rt ? 'weekly' : 'once', days: rt ? r.days : [wdOf(d)], xp: r.xp || 0, remind: r.remind, note: r.note, act: r.act, travel: r.travel || 0 })}</details>`);
 }
 function sheetSlot(d, s, e, social) {
@@ -900,6 +979,9 @@ function sheetSettings() {
     <label>Your name<input name="name" value="${esc(st.name)}" autocomplete="off"></label>
     <div class="grid3"><label>Water (glasses)<input type="number" name="water" value="${st.water}" min="4" max="16" inputmode="numeric"></label><label>Protein (g)<input type="number" name="protein" value="${st.protein}" min="40" max="250" step="5" inputmode="numeric"></label><label>Cycle length<input type="number" name="cycleLen" value="${S.cycleLen}" min="21" max="40" inputmode="numeric"></label></div>
     <button class="btn primary wide" type="submit">Save</button></form>
+  <h3>Look</h3>
+  <p class="label">Colour theme</p><div class="chips">${C.themes.map(t => `<button class="chip${S.look.theme === t.id ? ' on' : ''}${unlocked(t) ? '' : ' locked'}" data-act="look" data-k="theme" data-id="${t.id}"><i class="dot" style="background:${t.light}"></i>${esc(t.name)}${unlocked(t) ? '' : ' · ' + (t.boss ? 'beat ' + t.boss + ' boss' : 'level ' + t.level)}</button>`).join('')}</div>
+  <p class="label">Flowers</p><div class="chips">${C.flowers.map(f => `<button class="chip${S.look.flower === f.id ? ' on' : ''}${unlocked(f) ? '' : ' locked'}" data-act="look" data-k="flower" data-id="${f.id}"><i class="dot" style="background:${f.petal};box-shadow:inset 0 0 0 1px var(--line)"></i>${esc(f.name)}${unlocked(f) ? '' : ' · ' + (f.boss ? 'beat ' + f.boss + ' bosses' : 'level ' + f.level)}</button>`).join('')}</div>
   <h3>Notifications</h3>
   <div class="card soft"><p>iPhone reminders come through the free <b>ntfy</b> app. Set up once:</p>
     <ol><li>Install “ntfy” from the App Store and allow notifications.</li><li>In ntfy tap <b>+</b> and subscribe to the topic below (server: ntfy.sh).</li><li>Tap “Send test”.</li></ol>
@@ -914,6 +996,26 @@ function sheetSettings() {
   <h3>Backup</h3><p class="hint">Your data lives on this phone. Export a backup once a month.</p>
   <div class="row gap wrap"><button class="btn" data-act="export">Export backup</button><label class="btn">Import backup<input type="file" accept="application/json,.json" class="hide" data-act-change="import"></label></div>
   <p class="hint">Life Quest ${esc(C.version)}</p>`);
+}
+
+/* ---------- moving things around ---------- */
+function shiftItem(d, it, n) {
+  const dur = toMin(it.end) - toMin(it.start), s = Math.max(0, Math.min(toMin(it.start) + n, 1439 - dur));
+  const ns = fromMin(s), ne = fromMin(s + dur);
+  if (it.src === 'routine') { (S.ovr[d] = S.ovr[d] || {})[it.key] = { start: ns, end: ne }; }
+  else if (it.src === 'event') { it.ref.start = ns; it.ref.end = ne; }
+  else if (it.src === 'todo') { it.ref.plan.start = ns; }
+  return ns;
+}
+const movable = i => i.kind !== 'open' && i.src !== 'commute' && i.cat !== 'work' && toMin(i.start) < 21 * 60 + 30;
+function makeRoom(d, newKey, start, end) {
+  const s0 = toMin(start), e0 = toMin(end);
+  const after = itemsFor(d).filter(i => i.key !== newKey && movable(i) && toMin(i.start) >= s0);
+  if (!after.length) return;
+  const first = Math.min(...after.map(i => toMin(i.start) - (i.travel || 0)));
+  const delta = e0 - first; if (delta <= 0) return;
+  after.forEach(i => shiftItem(d, i, delta));
+  toast('Made room: later plans moved ' + delta + ' min back');
 }
 
 /* ---------- reminders via ntfy ---------- */
@@ -1029,6 +1131,14 @@ const A = {
   jsym: el => { const L = log(DAY); L.j = L.j || {}; const s = L.j.sym = L.j.sym || []; const v = el.dataset.s; L.j.sym = s.includes(v) ? s.filter(x => x !== v) : [...s, v]; save(); render(); },
   jopen: el => { DAY = el.dataset.d; render(); window.scrollTo(0, 0); },
   mtab: el => { MIND_TAB = el.dataset.t; render(); },
+  mv: el => { const d = el.dataset.d, it = itemByKey(d, el.dataset.k); if (!it) return; const ns = shiftItem(d, it, +el.dataset.n); save(); render(); sheetItem(d, it.key); toast('Moved to ' + ns); },
+  pushAfter: el => { const d = el.dataset.d, it = itemByKey(d, el.dataset.k); if (!it) return; const s = toMin(it.start), n = +el.dataset.n;
+    itemsFor(d).filter(i => movable(i) && toMin(i.start) >= s).forEach(i => shiftItem(d, i, n)); save(); render(); sheetItem(d, it.key); toast('Pushed the rest of the day by ' + n + ' min'); },
+  addAfter: el => { const d = el.dataset.d, it = itemByKey(d, el.dataset.k); if (!it) return; openSheet('<h2>Insert after ' + esc(it.title) + '</h2>' + eventForm({ date: d, start: it.end, end: addMin(it.end, 60), cat: 'social', xp: 15, remind: 15, room: true })); },
+  resetDay: el => { delete S.ovr[el.dataset.d]; save(); closeSheet(); render(); toast('Times reset to your normal plan'); },
+  side: el => { const L = log(el.dataset.d); L.side = L.side ? 0 : 1; save(); render(); if (L.side) reward({ tag: 'side' }, 25); },
+  sideSwap: el => { const L = log(el.dataset.d); L.sideIdx = (sideOf(el.dataset.d) + 7) % C.sideQuests.length; L.sideSwapped = 1; save(); render(); },
+  look: el => { const o = (el.dataset.k === 'theme' ? C.themes : C.flowers).find(x => x.id === el.dataset.id); if (!o || !unlocked(o)) { toast('Still locked — keep levelling up'); return; } S.look[el.dataset.k] = o.id; applyLook(); save(); sheetSettings(); },
   medOpen: el => medOpen(el.dataset.id, +el.dataset.m, !!el.dataset.lesson),
   medBefore: el => { MS.before = +el.dataset.n; $$('#mdBefore button').forEach(b => b.classList.toggle('on', b === el)); },
   medBegin: () => medBegin(),
@@ -1106,7 +1216,7 @@ const FORMS = {
       S.routine.push(Object.assign({ id: uid(), tag: v.act || 'custom', days: days.length ? days : [wdOf(v.date)], from: v.date }, base, v.quest ? {} : { kind: 'fixed' }));
     } else if (v.src === 'event' && v.id) {
       Object.assign(S.events.find(x => x.id === v.id), base, { date: v.date });
-    } else S.events.push(Object.assign({ id: uid(), date: v.date, act: v.act || undefined }, base));
+    } else { const nid = uid(); S.events.push(Object.assign({ id: nid, date: v.date, act: v.act || undefined }, base)); if (v.room) makeRoom(v.date, 'e:' + nid, v.start, v.end); }
     save(); closeSheet(); render(); toast('Saved');
   },
   motto: f => { const v = Object.fromEntries(new FormData(f)); log(v.d).motto = v.m.trim() || undefined; save(); closeSheet(); render(); },
@@ -1147,12 +1257,14 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   const t = iso(new Date());
   if (t !== TODAY) { if (DAY === TODAY) DAY = t; if (PLAN_DAY === TODAY) PLAN_DAY = t; TODAY = t; }
-  render(); syncReminders();
+  render(); syncReminders(); runDaily();
   if (restEnd) tickRest();
   if (MS && MS.started) medTick();
 });
 if (S.draft && S.draft.date !== TODAY) S.draft = null;
+applyLook();
 route();
+runDaily();
 if (S.draft && Object.keys(S.draft.sets).length) setTimeout(() => toast('Workout in progress — open Gym to resume'), 800);
 setTimeout(syncReminders, 1500);
 setInterval(() => { if (!document.hidden && VIEW === 'today' && !$('#sheet').classList.contains('on')) render(); }, 60000);

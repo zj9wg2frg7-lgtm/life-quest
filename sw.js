@@ -1,5 +1,5 @@
 /* Life Quest service worker: network first, offline fallback. Bump VERSION on every release. */
-const VERSION = 'lq-2.2.0';
+const VERSION = 'lq-2.3.0';
 const SHELL = ['./', 'index.html', 'app.js', 'content.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

@@ -1,6 +1,6 @@
 /* Life Quest — content. Everything the app says lives here, so it can be edited without touching logic. */
 window.LQ = {
-  version: "2.2.0",
+  version: "2.3.0",
 
   cats: {
     work:   { name: "Work & fixed",  color: "#C67A78", soft: "#FCE1DF" },
@@ -14,11 +14,11 @@ window.LQ = {
   },
 
   /* Base routine. kind: quest (tick for XP) · fixed (no tick) · open (free time window) · gym. travel = minutes of commute before AND after. */
-  routineVersion: 4,
+  routineVersion: 5,
   routine: [
     { id: "morning", tag: "morning", cat: "body", title: "Morning reset", days: [0,1,2,3,4,5,6], start: "07:00", end: "07:30", xp: 10, remind: 0,
       note: "500 ml water before coffee · breakfast with protein · vitamin D + omega-3 + creatine · 5 min daylight." },
-    { id: "meditate", tag: "meditate", cat: "mind", title: "Meditate · today's lesson", days: [0,1,2,3,4,5,6], start: "07:30", end: "07:45", xp: 15,
+    { id: "meditate", tag: "meditate", cat: "mind", title: "Meditate", days: [0,1,2,3,4,5,6], start: "07:30", end: "07:45", xp: 15,
       note: "Open Mind → Meditate and press Start. Even 5 minutes counts." },
     { id: "job1", tag: "job", cat: "career", title: "Job hunt: 1 application", days: [0,1,4], start: "08:15", end: "09:45", xp: 40, remind: 0,
       note: "Win condition: 1 tailored application OR 1 serious lead (message, call, follow-up). Pick the job in the first 10 minutes." },
@@ -28,15 +28,15 @@ window.LQ = {
     { id: "gymB", tag: "gym", kind: "gym", session: "UA", cat: "train", title: "Gym · Upper A", days: [1], start: "10:15", end: "11:45", xp: 60, remind: 10, travel: 30 },
     { id: "gymC", tag: "gym", kind: "gym", session: "LB", cat: "train", title: "Gym · Lower B", days: [4], start: "10:15", end: "11:45", xp: 60, remind: 10, travel: 30 },
     { id: "gymD", tag: "gym", kind: "gym", session: "UB", cat: "train", title: "Gym · Upper B", days: [5], start: "11:00", end: "12:30", xp: 60, remind: 10, travel: 30 },
-    { id: "mit1", tag: "mit", cat: "career", title: "Power hour: most important task", days: [0,1,4], start: "13:30", end: "14:30", xp: 25,
-      note: "One task that moves life forward. Pick it from your to-do list the evening before." },
-    { id: "mit2", tag: "mit", cat: "career", title: "Power hour: most important task", days: [2,3], start: "11:00", end: "12:00", xp: 25,
-      note: "One task that moves life forward. Pick it from your to-do list the evening before." },
+    { id: "mit1", tag: "mit", cat: "career", title: "Power hour", days: [0,1,4], start: "13:30", end: "14:30", xp: 25,
+      note: "Your single most important task: one thing that moves life forward. Pick it from your to-do list the evening before." },
+    { id: "mit2", tag: "mit", cat: "career", title: "Power hour", days: [2,3], start: "11:00", end: "12:00", xp: 25,
+      note: "Your single most important task: one thing that moves life forward. Pick it from your to-do list the evening before." },
     { id: "tennis", tag: "tennis", cat: "train", title: "Tennis", days: [2], start: "14:00", end: "15:15", xp: 40, remind: 10, travel: 30,
       note: "Your cardio + agility day. Knee stretches from the Daily 10 afterwards." },
     { id: "premeal1", tag: "premeal", cat: "body", title: "Pre-work meal", days: [1], start: "14:45", end: "15:15", xp: 10, remind: 0,
       note: "Proper meal, ~30 g protein, so you don't get home at 21:00 starving. Pack a snack." },
-    { id: "premealW", tag: "premeal", cat: "body", title: "Proper lunch before tennis + work", days: [2], start: "12:45", end: "13:15", xp: 10, remind: 0,
+    { id: "premealW", tag: "premeal", cat: "body", title: "Lunch before tennis", days: [2], start: "12:45", end: "13:15", xp: 10, remind: 0,
       note: "Today you go from tennis straight to work, so eat properly now (~30 g protein) and pack a snack for 18:00." },
     { id: "premeal2", tag: "premeal", cat: "body", title: "Pre-work meal", days: [3], start: "16:15", end: "16:45", xp: 10, remind: 0, skip: ["2026-11-26"],
       note: "Proper meal, ~30 g protein, before the evening shift." },
@@ -44,7 +44,7 @@ window.LQ = {
     { id: "work2", tag: "work", kind: "fixed", cat: "work", title: "Work", days: [3], start: "17:30", end: "19:00", travel: 30 },
     { id: "groceries", tag: "groceries", cat: "home", title: "Groceries", days: [5], start: "13:30", end: "14:30", xp: 15,
       note: "Shop from the list you made on Sunday." },
-    { id: "clean", tag: "clean", cat: "home", title: "Apartment reset + laundry", days: [6], start: "10:00", end: "11:30", xp: 50, remind: 0,
+    { id: "clean", tag: "clean", cat: "home", title: "Clean + laundry", days: [6], start: "10:00", end: "11:30", xp: 50, remind: 0,
       note: "Laundry in first. Kitchen → bathroom → floors → bedding every 2nd week → hang laundry." },
     { id: "mealprep", tag: "mealprep", cat: "home", title: "Meal prep", days: [6], start: "17:00", end: "18:30", xp: 30,
       note: "2 proteins + 1 grain + a tray of roasted veg. 6–8 boxes for the work days." },
@@ -52,8 +52,8 @@ window.LQ = {
       note: "Look at the week in Garden. Plan 5 jobs, the grocery list, next week's power-hour tasks, and when you'll call Mom." },
     { id: "read", tag: "read", cat: "mind", title: "Reading", days: [0,3,6], start: "20:30", end: "21:30", xp: 20,
       note: "Phone in another room. 20 pages counts." },
-    { id: "stretch", tag: "stretch", cat: "body", title: "Daily 10 — stretch & physio", days: [0,1,2,3,4,5,6], start: "22:00", end: "22:15", xp: 15, remind: 0 },
-    { id: "wind", tag: "wind", cat: "body", title: "Wind-down + face massage", days: [0,1,2,3,4,5,6], start: "22:30", end: "23:00", xp: 10, remind: 0,
+    { id: "stretch", tag: "stretch", cat: "body", title: "Daily 10 · stretch", days: [0,1,2,3,4,5,6], start: "22:00", end: "22:15", xp: 15, remind: 0 },
+    { id: "wind", tag: "wind", cat: "body", title: "Face massage & bed", days: [0,1,2,3,4,5,6], start: "22:30", end: "23:00", xp: 10, remind: 0,
       note: "Screens away · 5-min face massage (forehead, jaw, under-eyes, neck — light upward strokes with oil) · skincare · magnesium · lights out 23:00." },
     { id: "open1", tag: "open", kind: "open", cat: "social", title: "Open time", days: [0], start: "17:00", end: "20:00" },
     { id: "open2", tag: "open", kind: "open", cat: "social", title: "Open time", days: [4], start: "18:00", end: "22:00" },
@@ -133,44 +133,44 @@ window.LQ = {
   sessions: {
     LA: { name: "Lower A", focus: "Glutes + core", warm: "lower", cardio: "20 min incline walk, 8–10 %, ~5 km/h (bike if knees complain)",
       ex: [
-        { id: "hipthrust", name: "Hip thrust", sets: 4, lo: 8, hi: 12, start: 30, inc: 5, rest: 120, cue: "Chin tucked, ribs down, pause 1 s at the top. Push through your heels.", alt: "Glute bridge machine or single-leg glute bridge" },
-        { id: "goblet", name: "Goblet squat to box", sets: 3, lo: 8, hi: 12, start: 10, inc: 2, rest: 120, cue: "Sit back to a box at a pain-free depth. Knees track over toes.", alt: "Leg press, feet mid-platform, short range" },
-        { id: "rdl", name: "Dumbbell Romanian deadlift", per: true, sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 120, cue: "Brace first, push hips back, spine neutral. Go down until hamstrings stretch, don't cut it short.", alt: "Cable pull-through" },
-        { id: "legpress", name: "Leg press, feet high & wide", sets: 3, lo: 10, hi: 12, start: 60, inc: 5, rest: 120, cue: "High feet = more glute, less knee. Lower back stays on the pad.", alt: "Goblet squat to a higher box" },
-        { id: "abduct", name: "Hip abduction machine", sets: 3, lo: 12, hi: 20, start: 25, inc: 5, rest: 75, cue: "Lean slightly forward for the upper glute. Slow on the way back.", alt: "Banded lateral walk, 3 × 15 steps/side" },
-        { id: "pallof", name: "Pallof press, per side", sets: 3, lo: 10, hi: 12, start: 5, inc: 2.5, rest: 60, cue: "Hips and ribs don't move. Anti-rotation = real core strength.", alt: "Dead bug" },
-        { id: "sideplank", name: "Side plank", unit: "sec", sets: 2, lo: 20, hi: 40, rest: 45, cue: "Straight line ear–hip–ankle. Knees-down version is fine.", alt: "Side plank on knees" }
+        { id: "hipthrust", how: ["Upper back on a bench edge (just below the shoulder blades), bar or machine pad over the hip crease.", "Feet flat, shins vertical at the top. Tuck chin and ribs down.", "Drive hips up until thighs are level with the floor, squeeze 1 s, lower under control."], name: "Hip thrust", sets: 4, lo: 8, hi: 12, start: 30, inc: 5, rest: 120, cue: "Chin tucked, ribs down, pause 1 s at the top. Push through your heels.", alt: "Glute bridge machine or single-leg glute bridge" },
+        { id: "goblet", how: ["Hold a dumbbell vertically against your chest, feet shoulder-width, toes slightly out.", "Brace, then sit back and down until you lightly touch the box.", "Stand up by pushing the floor away, knees following your toes."], name: "Goblet squat to box", sets: 3, lo: 8, hi: 12, start: 10, inc: 2, rest: 120, cue: "Sit back to a box at a pain-free depth. Knees track over toes.", alt: "Leg press, feet mid-platform, short range" },
+        { id: "rdl", how: ["Stand tall, dumbbells in front of the thighs, knees soft.", "Push the hips back like closing a car door with your bum; dumbbells slide down the legs.", "Stop when hamstrings are stretched and the back is still flat, then squeeze glutes to stand."], name: "Dumbbell Romanian deadlift", per: true, sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 120, cue: "Brace first, push hips back, spine neutral. Go down until hamstrings stretch, don't cut it short.", alt: "Cable pull-through" },
+        { id: "legpress", how: ["Sit with your back and hips flat on the pad.", "Place feet high and wide on the platform.", "Lower until knees are about 90°, then press up without locking the knees."], name: "Leg press, feet high & wide", sets: 3, lo: 10, hi: 12, start: 60, inc: 5, rest: 120, cue: "High feet = more glute, less knee. Lower back stays on the pad.", alt: "Goblet squat to a higher box" },
+        { id: "abduct", how: ["Sit in the machine, pads on the outside of the knees.", "Lean slightly forward from the hips.", "Push the knees apart, pause, return slowly."], name: "Hip abduction machine", sets: 3, lo: 12, hi: 20, start: 25, inc: 5, rest: 75, cue: "Lean slightly forward for the upper glute. Slow on the way back.", alt: "Banded lateral walk, 3 × 15 steps/side" },
+        { id: "pallof", how: ["Stand side-on to a cable at chest height, handle at your sternum.", "Brace and press the handle straight out in front of you.", "Hold 2 s without letting the cable twist you, bring it back. Then switch sides."], name: "Pallof press, per side", sets: 3, lo: 10, hi: 12, start: 5, inc: 2.5, rest: 60, cue: "Hips and ribs don't move. Anti-rotation = real core strength.", alt: "Dead bug" },
+        { id: "sideplank", how: ["Lie on your side, elbow under the shoulder.", "Lift hips so ear, hip and ankle are in one line.", "Hold; drop to the knees if form breaks."], name: "Side plank", unit: "sec", sets: 2, lo: 20, hi: 40, rest: 45, cue: "Straight line ear–hip–ankle. Knees-down version is fine.", alt: "Side plank on knees" }
       ] },
     UA: { name: "Upper A", focus: "Back + shoulder blades", warm: "upper", cardio: "20 min cross-trainer: 6 × (1 min hard / 2 min easy) + 2 min easy",
       ex: [
-        { id: "latpull", name: "Lat pulldown", sets: 4, lo: 8, hi: 12, start: 35, inc: 2.5, rest: 120, cue: "Shoulders down first, then pull elbows to your back pockets. No leaning back.", alt: "Assisted pull-up" },
-        { id: "cablerow", name: "Seated cable row", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 90, cue: "Squeeze shoulder blades together for 1 s. Chest tall.", alt: "Machine row" },
-        { id: "pushup", name: "Push-up — ladder level", unit: "level", sets: 3, lo: 6, hi: 12, rest: 90, cue: "One straight plank, elbows ~45°. Stop 1 rep before form breaks.", alt: "One level easier" },
-        { id: "machrow", name: "Chest-supported machine row", sets: 3, lo: 10, hi: 12, start: 17.5, inc: 2.5, rest: 90, cue: "Chest stays on the pad — zero load on the lower back.", alt: "One-arm dumbbell row" },
-        { id: "facepull", name: "Face pull (rope)", sets: 3, lo: 12, hi: 15, start: 7.5, inc: 2.5, rest: 60, cue: "Pull to your forehead, thumbs back. The shoulder-blade health exercise.", alt: "Band pull-aparts" },
-        { id: "ohp", name: "Seated dumbbell shoulder press", per: true, sets: 3, lo: 8, hi: 12, start: 5, inc: 1, rest: 90, cue: "Back against the bench, ribs down.", alt: "Machine shoulder press" },
-        { id: "yraise", name: "Prone Y-raise on incline bench", per: true, sets: 2, lo: 10, hi: 15, start: 1, inc: 1, rest: 60, cue: "Thumbs up, lift with the lower traps. Tiny weights are normal.", alt: "Prone Y-raise without weight" },
-        { id: "deadbug", name: "Dead bug, per side", unit: "bw", sets: 3, lo: 8, hi: 10, rest: 45, cue: "Lower back glued to the floor. Breathe out as you extend.", alt: "Bird dog" }
+        { id: "latpull", how: ["Grip a bit wider than shoulders, thighs locked under the pad.", "First pull the shoulders down, then pull the bar to the top of your chest.", "Control the bar back up until arms are straight."], name: "Lat pulldown", sets: 4, lo: 8, hi: 12, start: 35, inc: 2.5, rest: 120, cue: "Shoulders down first, then pull elbows to your back pockets. No leaning back.", alt: "Assisted pull-up" },
+        { id: "cablerow", how: ["Sit tall, feet on the platform, knees soft.", "Pull the handle to your belly button, elbows close to the body.", "Squeeze the shoulder blades together 1 s, then let the arms stretch forward."], name: "Seated cable row", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 90, cue: "Squeeze shoulder blades together for 1 s. Chest tall.", alt: "Machine row" },
+        { id: "pushup", how: ["Hands slightly wider than shoulders on your ladder surface.", "Body in one straight line from head to heels; brace glutes and belly.", "Lower chest toward the surface with elbows ~45°, then press away."], name: "Push-up — ladder level", unit: "level", sets: 3, lo: 6, hi: 12, rest: 90, cue: "One straight plank, elbows ~45°. Stop 1 rep before form breaks.", alt: "One level easier" },
+        { id: "machrow", how: ["Chest against the pad, grab the handles.", "Pull elbows back past your ribs.", "Squeeze the shoulder blades, then return slowly."], name: "Chest-supported machine row", sets: 3, lo: 10, hi: 12, start: 17.5, inc: 2.5, rest: 90, cue: "Chest stays on the pad — zero load on the lower back.", alt: "One-arm dumbbell row" },
+        { id: "facepull", how: ["Rope at forehead height, step back until the arms are straight.", "Pull the rope toward your forehead, hands apart.", "Finish with thumbs pointing back, elbows high. Slow return."], name: "Face pull (rope)", sets: 3, lo: 12, hi: 15, start: 7.5, inc: 2.5, rest: 60, cue: "Pull to your forehead, thumbs back. The shoulder-blade health exercise.", alt: "Band pull-aparts" },
+        { id: "ohp", how: ["Sit with your back against an upright bench, dumbbells at shoulder height.", "Brace, ribs down, press the dumbbells up and slightly together.", "Lower back to ear level."], name: "Seated dumbbell shoulder press", per: true, sets: 3, lo: 8, hi: 12, start: 5, inc: 1, rest: 90, cue: "Back against the bench, ribs down.", alt: "Machine shoulder press" },
+        { id: "yraise", how: ["Lie face-down on an incline bench, arms hanging, thumbs up.", "Raise the arms forward and up into a Y.", "Pause, lower slowly. Keep the neck long."], name: "Prone Y-raise on incline bench", per: true, sets: 2, lo: 10, hi: 15, start: 1, inc: 1, rest: 60, cue: "Thumbs up, lift with the lower traps. Tiny weights are normal.", alt: "Prone Y-raise without weight" },
+        { id: "deadbug", how: ["Lie on your back, arms up, knees bent at 90° over the hips.", "Press the lower back into the floor.", "Slowly extend the opposite arm and leg, breathe out, return. Alternate."], name: "Dead bug, per side", unit: "bw", sets: 3, lo: 8, hi: 10, rest: 45, cue: "Lower back glued to the floor. Breathe out as you extend.", alt: "Bird dog" }
       ] },
     LB: { name: "Lower B", focus: "Glutes + hamstrings", warm: "lower", cardio: "20 min bike, steady — you can still talk",
       ex: [
-        { id: "bulgarian", name: "Bulgarian split squat", per: true, sets: 3, lo: 8, hi: 10, start: 7, inc: 1, rest: 120, cue: "Slight forward lean = more glute. Front knee tracks over toes. Hold a rack for balance if needed.", alt: "Split squat with back foot on the floor" },
-        { id: "backext", name: "45° back extension (added kg)", sets: 3, lo: 10, hi: 15, start: 0, inc: 2.5, rest: 90, cue: "Round your upper back slightly and squeeze glutes to come up. Builds a stronger lower back safely. Stop if back pain increases.", alt: "Glute bridge 3 × 15" },
-        { id: "pullthru", name: "Cable pull-through", sets: 3, lo: 10, hi: 15, start: 15, inc: 2.5, rest: 90, cue: "Hinge, not squat. Snap hips forward and squeeze.", alt: "Kettlebell deadlift" },
-        { id: "hamcurl", name: "Hamstring curl machine", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 75, cue: "3 s on the way back.", alt: "Swiss-ball hamstring curl" },
-        { id: "stepup", name: "Step-up to low box", per: true, sets: 2, lo: 8, hi: 10, start: 0, inc: 1, rest: 75, cue: "Drive through the whole foot of the top leg. Practical strength for stairs and life.", alt: "Lateral step-up, lower box" },
-        { id: "farmer", name: "Farmer carry, 30 m", unit: "carry", per: true, sets: 3, lo: 1, hi: 1, start: 10, inc: 2, rest: 75, cue: "Tall posture, short quick steps. Core, grip and shoulders at once.", alt: "Suitcase carry" }
+        { id: "bulgarian", how: ["Back foot on a bench, front foot far enough forward that the knee stays over the foot.", "Lean the torso slightly forward and lower straight down.", "Push through the front heel to stand."], name: "Bulgarian split squat", per: true, sets: 3, lo: 8, hi: 10, start: 7, inc: 1, rest: 120, cue: "Slight forward lean = more glute. Front knee tracks over toes. Hold a rack for balance if needed.", alt: "Split squat with back foot on the floor" },
+        { id: "backext", how: ["Hips on the pad edge, feet locked.", "Round the upper back slightly, fold down from the hips.", "Squeeze the glutes to lift until the body is in a line — not further."], name: "45° back extension (added kg)", sets: 3, lo: 10, hi: 15, start: 0, inc: 2.5, rest: 90, cue: "Round your upper back slightly and squeeze glutes to come up. Builds a stronger lower back safely. Stop if back pain increases.", alt: "Glute bridge 3 × 15" },
+        { id: "pullthru", how: ["Rope between your legs from a low cable, face away from the stack.", "Hinge: push the hips back, let the rope travel through.", "Snap the hips forward and squeeze the glutes; arms just hold on."], name: "Cable pull-through", sets: 3, lo: 10, hi: 15, start: 15, inc: 2.5, rest: 90, cue: "Hinge, not squat. Snap hips forward and squeeze.", alt: "Kettlebell deadlift" },
+        { id: "hamcurl", how: ["Knees just off the pad edge, roller above the heels.", "Curl the heels toward your glutes.", "Lower in 3 seconds."], name: "Hamstring curl machine", sets: 3, lo: 10, hi: 12, start: 20, inc: 2.5, rest: 75, cue: "3 s on the way back.", alt: "Swiss-ball hamstring curl" },
+        { id: "stepup", how: ["Stand in front of a low box or step.", "Put one whole foot on it and push through it to stand up tall.", "Lower slowly; do all reps on one side, then switch."], name: "Step-up to low box", per: true, sets: 2, lo: 8, hi: 10, start: 0, inc: 1, rest: 75, cue: "Drive through the whole foot of the top leg. Practical strength for stairs and life.", alt: "Lateral step-up, lower box" },
+        { id: "farmer", how: ["Pick up a heavy dumbbell in each hand.", "Stand tall, shoulders down, belly braced.", "Walk 30 m with short steady steps."], name: "Farmer carry, 30 m", unit: "carry", per: true, sets: 3, lo: 1, hi: 1, start: 10, inc: 2, rest: 75, cue: "Tall posture, short quick steps. Core, grip and shoulders at once.", alt: "Suitcase carry" }
       ] },
     UB: { name: "Upper B", focus: "Arms, chest, push-ups", warm: "upper", cardio: "20 min stair-climber or incline walk",
       ex: [
-        { id: "assistpull", name: "Assisted pull-up (assist kg)", sets: 3, lo: 6, hi: 8, start: 35, inc: -2.5, rest: 120, cue: "Full hang to chin over the bar. Progress = less assistance.", alt: "Lat pulldown" },
-        { id: "dbbench", name: "Dumbbell bench press", per: true, sets: 3, lo: 8, hi: 12, start: 6, inc: 1, rest: 90, cue: "Shoulder blades pinched into the bench, elbows ~45°.", alt: "Chest press machine" },
-        { id: "onearmrow", name: "One-arm dumbbell row", sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 75, cue: "Hand on the bench, flat back. Pull toward your hip.", alt: "Seated cable row" },
-        { id: "pushup", name: "Push-up — ladder level", unit: "level", sets: 2, lo: 6, hi: 12, rest: 90, cue: "Second practice of the week. Quality reps only.", alt: "One level easier" },
-        { id: "curl", name: "Dumbbell biceps curl", per: true, sets: 3, lo: 10, hi: 12, start: 5, inc: 1, rest: 60, cue: "Elbows pinned, 2 s down.", alt: "Cable curl" },
-        { id: "pushdown", name: "Triceps rope pushdown", sets: 3, lo: 10, hi: 15, start: 10, inc: 2.5, rest: 60, cue: "Elbows by your sides, spread the rope at the bottom.", alt: "Overhead dumbbell triceps extension" },
-        { id: "lateral", name: "Lateral raise", per: true, sets: 3, lo: 12, hi: 15, start: 2, inc: 1, rest: 60, cue: "Lead with the elbows, stop at shoulder height.", alt: "Cable lateral raise" },
-        { id: "suitcase", name: "Suitcase carry 20 m/side + bear crawl 10 m", unit: "carry", sets: 2, lo: 1, hi: 1, start: 10, inc: 2, rest: 60, cue: "One heavy dumbbell, don't lean. Practical core finisher.", alt: "Farmer carry" }
+        { id: "assistpull", how: ["Kneel or stand on the platform, grip slightly wider than shoulders.", "Pull until your chin is over the bar.", "Lower all the way to straight arms."], name: "Assisted pull-up (assist kg)", sets: 3, lo: 6, hi: 8, start: 35, inc: -2.5, rest: 120, cue: "Full hang to chin over the bar. Progress = less assistance.", alt: "Lat pulldown" },
+        { id: "dbbench", how: ["Lie on a bench, dumbbells over the chest, shoulder blades pinched.", "Lower until elbows are slightly below the bench, elbows ~45°.", "Press back up."], name: "Dumbbell bench press", per: true, sets: 3, lo: 8, hi: 12, start: 6, inc: 1, rest: 90, cue: "Shoulder blades pinched into the bench, elbows ~45°.", alt: "Chest press machine" },
+        { id: "onearmrow", how: ["One hand and knee on a bench, back flat.", "Pull the dumbbell toward your hip.", "Lower until the arm is straight."], name: "One-arm dumbbell row", sets: 3, lo: 8, hi: 12, start: 8, inc: 1, rest: 75, cue: "Hand on the bench, flat back. Pull toward your hip.", alt: "Seated cable row" },
+        { id: "pushup", how: ["Hands slightly wider than shoulders on your ladder surface.", "Body in one straight line from head to heels; brace glutes and belly.", "Lower chest toward the surface with elbows ~45°, then press away."], name: "Push-up — ladder level", unit: "level", sets: 2, lo: 6, hi: 12, rest: 90, cue: "Second practice of the week. Quality reps only.", alt: "One level easier" },
+        { id: "curl", how: ["Stand tall, palms facing forward.", "Curl up without moving the elbows.", "Lower in 2 seconds."], name: "Dumbbell biceps curl", per: true, sets: 3, lo: 10, hi: 12, start: 5, inc: 1, rest: 60, cue: "Elbows pinned, 2 s down.", alt: "Cable curl" },
+        { id: "pushdown", how: ["Rope at a high cable, elbows pinned to your sides.", "Push down until the arms are straight, spread the rope.", "Return until the forearms are just above parallel."], name: "Triceps rope pushdown", sets: 3, lo: 10, hi: 15, start: 10, inc: 2.5, rest: 60, cue: "Elbows by your sides, spread the rope at the bottom.", alt: "Overhead dumbbell triceps extension" },
+        { id: "lateral", how: ["Light dumbbells at your sides, slight bend in the elbows.", "Raise out to the sides, leading with the elbows.", "Stop at shoulder height, lower slowly."], name: "Lateral raise", per: true, sets: 3, lo: 12, hi: 15, start: 2, inc: 1, rest: 60, cue: "Lead with the elbows, stop at shoulder height.", alt: "Cable lateral raise" },
+        { id: "suitcase", how: ["Hold one heavy dumbbell in one hand.", "Walk 20 m without leaning to either side; switch hands.", "Then bear crawl: on hands and toes, knees hovering, crawl 10 m."], name: "Suitcase carry 20 m/side + bear crawl 10 m", unit: "carry", sets: 2, lo: 1, hi: 1, start: 10, inc: 2, rest: 60, cue: "One heavy dumbbell, don't lean. Practical core finisher.", alt: "Farmer carry" }
       ] }
   },
   gentle: { name: "Gentle day", items: ["20–30 min easy walk, outside if possible", "Daily 10 at home", "Optional: 10 min yoga flow or a warm bath"] },
@@ -238,6 +238,45 @@ window.LQ = {
     ["open", 10], ["breath", 15], ["noting", 10], ["metta", 10], ["body", 20], ["open", 10], ["breath", 15]
   ],
   courseWeeks: ["Week 1 · Learn to sit", "Week 2 · Notice the mind", "Week 3 · Label and open", "Week 4 · Stay with it"],
+
+  /* Game layer */
+  sideQuests: [
+    "Drink a full glass of water before every meal today",
+    "Send one networking message on LinkedIn",
+    "No phone for the first 30 minutes after waking",
+    "Take the stairs every time today",
+    "Give someone a specific compliment",
+    "Write one German sentence about your day in the journal",
+    "10 minutes outside in daylight before 12:00",
+    "Eat a vegetable with every meal",
+    "Tidy one drawer or one shelf",
+    "Text a friend you haven't spoken to in a while",
+    "Do your push-up ladder level once, outside the gym",
+    "Read 10 pages before touching social media",
+    "Cook dinner instead of ordering",
+    "Stretch your hip flexors for 2 minutes after sitting",
+    "Unsubscribe from 5 newsletters you never read",
+    "Say no to one thing that isn't a priority",
+    "Walk during one phone call",
+    "Learn one new German word and use it out loud",
+    "Write down three things that went well today",
+    "Go to bed 15 minutes earlier than planned"
+  ],
+  bosses: ["The Procrastination Dragon", "Lord Doomscroll", "The Snooze Goblin", "The Sugar Wraith", "The Inner Schweinehund", "The Fog of Monday", "The Excuse Hydra", "The Couch Kraken"],
+  bossHP: 1100,
+  themes: [
+    { id: "sage", name: "Sage", level: 1, light: "#36634A", dark: "#7FB294" },
+    { id: "ocean", name: "Ocean", level: 3, light: "#2F5E7C", dark: "#7FB0D0" },
+    { id: "plum", name: "Plum", level: 6, light: "#6A4A7C", dark: "#B79AC8" },
+    { id: "clay", name: "Clay", level: 9, light: "#8A5A3C", dark: "#D4A587" },
+    { id: "ink", name: "Ink", boss: 1, light: "#2B2F36", dark: "#C9CED6" }
+  ],
+  flowers: [
+    { id: "rose", name: "Rose", level: 1, petal: "#E7A9C2", pollen: "#E9C46A" },
+    { id: "sun", name: "Sunflower", level: 7, petal: "#EFC75E", pollen: "#7A5230" },
+    { id: "lav", name: "Lavender", level: 10, petal: "#B7A3DE", pollen: "#F2E6B8" },
+    { id: "snow", name: "Snowdrop", boss: 2, petal: "#F4F6F2", pollen: "#B7D3A8" }
+  ],
 
   /* Habit log. limit = per week (0 = aim for none). */
   habits: [
@@ -396,6 +435,43 @@ window.LQ = {
     { id: "l2", c: "read", t: "Spacing makes it stick", b: "The same study time spread over several days beats one long session for remembering it weeks later.", src: "Cepeda et al., 2006 meta-analysis" },
     { id: "l3", c: "read", t: "Paper still wins for facts", b: "For informational texts, people understand slightly more from paper than from screens — especially under time pressure.", src: "Delgado et al., 2018 meta-analysis" },
     { id: "l4", c: "read", t: "Fiction trains empathy over time", b: "Lifetime exposure to fiction is linked to better understanding of others' minds. Single short reading sessions show less reliable effects.", src: "Mar, 2018 review" },
+    // German B2 — phrases and idioms
+    { id: "de1", c: "german", t: "Ich gehe davon aus, dass …", b: "I assume that … — Ich gehe davon aus, dass das Projekt im März startet.", src: "Deutsch B2 · Meinung" },
+    { id: "de2", c: "german", t: "Es kommt darauf an, ob …", b: "It depends on whether … — Es kommt darauf an, ob die Förderung bewilligt wird.", src: "Deutsch B2 · Bedingung" },
+    { id: "de3", c: "german", t: "etwas in Kauf nehmen", b: "to accept a downside — Für die Stelle nehme ich einen längeren Arbeitsweg in Kauf.", src: "Deutsch B2 · Verb-Nomen-Verbindung" },
+    { id: "de4", c: "german", t: "auf etwas Wert legen", b: "to value something — Ich lege großen Wert auf interkulturelle Zusammenarbeit.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de5", c: "german", t: "Für Rückfragen stehe ich Ihnen gern zur Verfügung.", b: "I'm happy to answer any questions — the classic last line of a German email or cover letter.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de6", c: "german", t: "Mit großem Interesse habe ich Ihre Stellenausschreibung gelesen.", b: "I read your job posting with great interest — a safe, formal opening for an Anschreiben.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de7", c: "german", t: "Über eine Einladung zu einem persönlichen Gespräch freue ich mich sehr.", b: "I'd be delighted to be invited to an interview — the standard closing of an Anschreiben.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de8", c: "german", t: "Verantwortung übernehmen", b: "to take on responsibility — In meinem Praktikum habe ich früh Verantwortung für Projekte übernommen.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de9", c: "german", t: "Erfahrungen sammeln", b: "to gain experience — Bei der IOM konnte ich wertvolle Erfahrungen in der Projektkoordination sammeln.", src: "Deutsch B2 · Bewerbung" },
+    { id: "de10", c: "german", t: "hinsichtlich + Genitiv", b: "regarding (formal) — Hinsichtlich des Termins melde ich mich morgen bei Ihnen.", src: "Deutsch B2 · Präposition" },
+    { id: "de11", c: "german", t: "unter Berücksichtigung + Genitiv", b: "taking into account — Unter Berücksichtigung der Kosten schlage ich Variante B vor.", src: "Deutsch B2 · Präposition" },
+    { id: "de12", c: "german", t: "Einerseits …, andererseits …", b: "On the one hand …, on the other … — Einerseits ist die Stelle spannend, andererseits ist sie befristet.", src: "Deutsch B2 · Argumentieren" },
+    { id: "de13", c: "german", t: "Zwar …, aber …", b: "Admittedly …, but … — Zwar ist das Gehalt niedriger, aber das Team ist großartig.", src: "Deutsch B2 · Argumentieren" },
+    { id: "de14", c: "german", t: "Je mehr …, desto …", b: "The more …, the more … — Je mehr ich übe, desto sicherer werde ich. (Verb at the end after je, verb second after desto.)", src: "Deutsch B2 · Grammatik" },
+    { id: "de15", c: "german", t: "Meines Erachtens …", b: "In my view (more formal than meiner Meinung nach) — Meines Erachtens sollten wir früher anfangen.", src: "Deutsch B2 · Meinung" },
+    { id: "de16", c: "german", t: "Ich stimme Ihnen insofern zu, als …", b: "I agree with you to the extent that … — polite partial agreement in discussions.", src: "Deutsch B2 · Diskussion" },
+    { id: "de17", c: "german", t: "Das sehe ich etwas anders.", b: "I see that a bit differently — the friendly way to disagree in meetings.", src: "Deutsch B2 · Diskussion" },
+    { id: "de18", c: "german", t: "Es lässt sich nicht leugnen, dass …", b: "It can't be denied that … — Es lässt sich nicht leugnen, dass Ehrenamt viel Zeit kostet.", src: "Deutsch B2 · Argumentieren" },
+    { id: "de19", c: "german", t: "Halten Sie mich bitte auf dem Laufenden.", b: "Please keep me posted. Informal: Halt mich auf dem Laufenden!", src: "Deutsch B2 · E-Mail" },
+    { id: "de20", c: "german", t: "Rücksprache halten (mit)", b: "to check with / consult — Ich halte kurz Rücksprache mit meiner Kollegin und melde mich.", src: "Deutsch B2 · Arbeit" },
+    { id: "de21", c: "german", t: "etwas zur Sprache bringen", b: "to bring something up — Ich möchte noch ein Thema zur Sprache bringen.", src: "Deutsch B2 · Arbeit" },
+    { id: "de22", c: "german", t: "sofern", b: "provided that — Sofern es Ihnen passt, könnten wir uns am Donnerstag treffen.", src: "Deutsch B2 · Konnektor" },
+    { id: "de23", c: "german", t: "infolgedessen", b: "as a result — Der Zug fiel aus. Infolgedessen kam ich zu spät. (Verb comes right after it.)", src: "Deutsch B2 · Konnektor" },
+    { id: "de24", c: "german", t: "nach wie vor", b: "still, as before — Ich bin nach wie vor an der Stelle interessiert.", src: "Deutsch B2 · Ausdruck" },
+    { id: "de25", c: "german", t: "auf Augenhöhe", b: "as equals — Uns ist eine Zusammenarbeit auf Augenhöhe wichtig. Very common in NGO language.", src: "Deutsch B2 · Ausdruck" },
+    { id: "de26", c: "german", t: "Es wäre schön, wenn …", b: "It would be nice if … — Konjunktiv II makes requests polite: Es wäre schön, wenn Sie mir bis Freitag antworten könnten.", src: "Deutsch B2 · Höflichkeit" },
+    { id: "de27", c: "german", t: "den Nagel auf den Kopf treffen", b: "to hit the nail on the head — Mit dieser Frage haben Sie den Nagel auf den Kopf getroffen.", src: "Deutsch B2 · Redewendung" },
+    { id: "de28", c: "german", t: "ins Fettnäpfchen treten", b: "to put your foot in it (literally: step into the little fat pot).", src: "Deutsch B2 · Redewendung" },
+    { id: "de29", c: "german", t: "um den heißen Brei herumreden", b: "to beat around the bush — Red nicht um den heißen Brei herum!", src: "Deutsch B2 · Redewendung" },
+    { id: "de30", c: "german", t: "jemandem unter die Arme greifen", b: "to help someone out — Meine Kollegin hat mir beim Umzug unter die Arme gegriffen.", src: "Deutsch B2 · Redewendung" },
+    { id: "de31", c: "german", t: "etwas auf die lange Bank schieben", b: "to put something off — Ich schiebe die Steuererklärung nicht mehr auf die lange Bank.", src: "Deutsch B2 · Redewendung" },
+    { id: "de32", c: "german", t: "den inneren Schweinehund überwinden", b: "to beat your inner couch potato (literally: inner pig-dog). Heute habe ich meinen inneren Schweinehund überwunden und war beim Sport.", src: "Deutsch B2 · Redewendung" },
+    { id: "de33", c: "german", t: "Tomaten auf den Augen haben", b: "to be oblivious (literally: tomatoes on the eyes) — Hast du Tomaten auf den Augen? Da steht es doch!", src: "Deutsch B2 · Redewendung" },
+    { id: "de34", c: "german", t: "sich etwas vornehmen", b: "to resolve to do something — Ich habe mir vorgenommen, jeden Morgen zu meditieren.", src: "Deutsch B2 · Verb" },
+    { id: "de35", c: "german", t: "ehrenamtlich tätig sein", b: "to volunteer — Seit September bin ich ehrenamtlich in einem Kulturverein tätig.", src: "Deutsch B2 · Lebenslauf" },
+    { id: "de36", c: "german", t: "im Großen und Ganzen", b: "by and large — Im Großen und Ganzen bin ich mit dem Ergebnis zufrieden.", src: "Deutsch B2 · Ausdruck" },
     // meditation
     { id: "md1", c: "calm", t: "Five minutes of sighing beat meditation", b: "In a month-long trial, 5 minutes a day of cyclic sighing (double inhale, long exhale) improved mood and lowered breathing rate more than mindfulness meditation did.", src: "Balban et al., 2023, Cell Reports Medicine" },
     { id: "md2", c: "calm", t: "Your mind wanders half the day", b: "People's minds wandered in about 47 % of waking moments, and they were less happy while it did — even during pleasant activities. Meditation trains the return.", src: "Killingsworth & Gilbert, 2010, Science" },
@@ -421,10 +497,10 @@ window.LQ = {
 
   /* which insight categories fit which completed task tag */
   insightMap: {
-    gym: ["train", "food", "sleep"], tennis: ["train", "social"], stretch: ["train", "sleep"], morning: ["sleep", "food", "mind"],
-    wind: ["sleep", "mind"], job: ["career", "mind"], mit: ["mind", "career"], read: ["read", "mind"], review: ["mind"],
+    gym: ["train", "food", "sleep", "german"], tennis: ["train", "social"], stretch: ["train", "sleep"], morning: ["sleep", "food", "mind"],
+    wind: ["sleep", "mind"], job: ["career", "german", "mind"], mit: ["mind", "career", "german"], read: ["read", "mind", "german"], review: ["mind", "german"],
     habit: ["habit"], meditate: ["calm", "mind"], commute: ["mind", "read"], clean: ["home", "mind"], groceries: ["food"], mealprep: ["food"], premeal: ["food"], journal: ["mind"],
-    social: ["social"], mom: ["social"], sis: ["social"], body: ["sleep", "train", "food"], todo: ["mind", "career"], any: ["mind", "social", "food"]
+    social: ["social"], mom: ["social"], sis: ["social"], body: ["sleep", "train", "food"], todo: ["mind", "career", "german"], any: ["mind", "social", "food", "german"], side: ["mind", "german", "social"]
   },
 
   achievements: [
@@ -447,6 +523,9 @@ window.LQ = {
     ["med10", "Still water", "10 meditation sessions"],
     ["med300", "Deep roots", "300 minutes of meditation"],
     ["course", "Trained mind", "Finish the 4-week meditation training"],
+    ["boss1", "Boss slayer", "Defeat a weekly boss"],
+    ["perfect", "Perfect day", "Finish every quest in one day"],
+    ["side10", "Side-quester", "Complete 10 daily side quests"],
     ["lvl10", "Bloom", "Reach level 10"]
   ]
 };
